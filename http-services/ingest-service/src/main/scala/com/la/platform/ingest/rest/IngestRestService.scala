@@ -6,7 +6,6 @@ import akka.http.scaladsl.server.Route
 import akka.pattern._
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData => ProduceData}
 import com.la.platform.ingest.actors.KafkaIngestProducerActorSelection
-import com.la.platform.ingest.model.IngestData
 import com.la.platform.ingest.rest.common.AbstractRestService
 
 import scala.concurrent.Future
@@ -19,14 +18,14 @@ class IngestRestService(implicit system: ActorSystem) extends AbstractRestServic
   override def buildRoute(): Route =
     path("ingest") {
       post {
-        entity(as[IngestData]) { entity => complete(ingestData(entity))}
+        entity(as[Ingest]) { entity => complete(ingestData(entity))}
       } ~
         get {
           complete("OK")
         }
     }
 
-  def ingestData(ingestData: IngestData): Future[String] = {
+  def ingestData(ingestData: Ingest): Future[String] = {
     completeAndCleanUpAct({
       (select ? ProduceData(1, ingestData.data, ingestData.originator)).mapTo[DataIngested].map(response => "OK")
     })

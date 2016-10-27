@@ -1,8 +1,11 @@
 package com.la.platform.ingest.actors
 
 import akka.actor.{Actor, ActorLogging, Props}
+import akka.routing.FromConfig
 import com.la.platform.ingest.common.util.KafkaIngestSettings
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, RecordMetadata}
+import net.liftweb.json._
+import net.liftweb.json.Serialization.write
 
 /**
   * Created by zemi on 25/10/2016.
@@ -11,7 +14,9 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
 
   import KafkaIngestProducerActor._
 
-  val polish = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm:ss")
+  implicit val formats = DefaultFormats
+
+  val polish = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm:ss.SSS")
 
   val settings = KafkaIngestSettings(context.system.settings.config)
 
@@ -31,16 +36,7 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
   private def produceData(ingestData: IngestData): Unit = {
     log.info(s"${getClass.getCanonicalName} produceData() ->")
       val now = java.time.LocalDateTime.now().format(polish)
-      val originator = ingestData.originator match {
-        case Some(org) => org
-        case None => ""
-      }
-      val messageVal =
-        s"""{
-           "message": "${ingestData.value}",
-           "originator": "$originator",
-           "time": "${now}"
-          }"""
+      val messageVal = write(KafkaIngestDataMessage(ingestData.value, ingestData.originator, now))
       log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
       val record = new ProducerRecord[Int, String](topic, ingestData.key, messageVal)
       producer.send(record).get()
@@ -63,5 +59,6 @@ object KafkaIngestProducerActor {
 
   val ACTOR_NAME = "kafkaIngestProducer"
 
-  def props: Props = Props[KafkaIngestProducerActor]
+//  def props: Props = Props[KafkaIngestProducerActor]
+  def props: Props = FromConfig.props(Props[KafkaIngestProducerActor])
 }

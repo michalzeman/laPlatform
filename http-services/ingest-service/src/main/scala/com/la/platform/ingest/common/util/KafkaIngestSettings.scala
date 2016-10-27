@@ -1,5 +1,7 @@
 package com.la.platform.ingest.common.util
 
+import java.util.UUID
+
 import com.typesafe.config.Config
 
 /**
@@ -21,7 +23,8 @@ class KafkaIngestSettings(config: Config) {
   def getKafkaProps(): java.util.Properties = {
     val props = new java.util.Properties()
     props.put("bootstrap.servers", bootstrap_servers)
-    props.put("client.id", client_id)
+    val guid = UUID.randomUUID().toString;
+    props.put("client.id", client_id+guid)
     props.put("key.serializer", key_serializer)
     props.put("value.serializer", value_serializer)
     props

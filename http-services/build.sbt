@@ -29,7 +29,8 @@ lazy val commonSettings = Seq(
     "org.postgresql"    % "postgresql"                            % "9.4-1203-jdbc42",
     "com.zaxxer"        % "HikariCP"                              % "2.4.1",
     "org.apache.kafka" % "kafka_2.11" % "0.9.0.1",
-    "org.apache.kafka" % "kafka-clients" % "0.9.0.1"
+    "org.apache.kafka" % "kafka-clients" % "0.9.0.1",
+    "net.liftweb" % "lift-json_2.11" % "2.6.3"
   )
 )
 
