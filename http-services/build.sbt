@@ -6,7 +6,7 @@ val akkaV = "2.4.8"
 val scalaTestV = "2.2.6"
 
 lazy val commonSettings = Seq(
-  organization := "com.la.platform",
+  organization := "com.la.platform.http",
   version := "1.0",
   scalaVersion := "2.11.8",
   scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),
@@ -68,7 +68,7 @@ lazy val ingestService = (project in file("ingest-service"))
   .settings(ingestServiceSettings: _*)
   .dependsOn(commonApi)
 
-lazy val root =
+lazy val httpServices =
   project.in(file("."))
     .aggregate(commonApi, ingestService)
 
