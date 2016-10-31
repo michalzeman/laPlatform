@@ -10,7 +10,7 @@ import com.typesafe.config.Config
 /**
   * Created by zemi on 25/10/2016.
   */
-object IngestMain extends AbstractMain {
+object IngestServiceMain extends AbstractMain {
 
   lazy val settings = Settings(system.settings.config)
 

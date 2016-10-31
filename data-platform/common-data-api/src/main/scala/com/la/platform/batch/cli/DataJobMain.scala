@@ -5,7 +5,7 @@ import org.apache.spark.sql.SparkSession
 /**
   * Created by zemi on 28/10/2016.
   */
-trait DataJobMain[C <: CliContext] {
+trait DataJobMain[C <: CliParams] {
 
   def main(args: Array[String]): Unit = {
 
@@ -20,7 +20,7 @@ trait DataJobMain[C <: CliContext] {
 
   def appName: String
 
-  def run(spark: SparkSession, opt: CliContext): Unit
+  def run(spark: SparkSession, opt: C): Unit
 
   def getCliContext(args:Array[String]): C
 }
