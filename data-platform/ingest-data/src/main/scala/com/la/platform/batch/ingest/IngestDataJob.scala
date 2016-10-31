@@ -15,7 +15,7 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
 
     val workingDirectory = opt.dataDir
 
-    val ssc = new StreamingContext(spark.sparkContext, Seconds(2))
+    val ssc = new StreamingContext(spark.sparkContext, Seconds(10))
     ssc.checkpoint("checkpoint")
 
     val topicMap = Map("ingest-data" -> 1)

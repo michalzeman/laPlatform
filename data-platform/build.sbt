@@ -7,13 +7,23 @@ lazy val commonSettings = Seq(
   version := "1.0",
   scalaVersion := "2.11.8",
   scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),
+  //TODO: resolve this problem with adding separate task for assembly where those dependencies would switch to provided
+//  libraryDependencies ++= Seq(
+//    "org.apache.spark" %% "spark-core" % "2.0.0" % "provided",
+//    "org.apache.spark" %% "spark-sql" % "2.0.0" % "provided",
+//    "org.apache.spark" %% "spark-streaming" % "2.0.0" % "provided",
+//    "org.apache.spark" %% "spark-mllib" % "2.0.0" % "provided",
+//    "org.apache.spark" %% "spark-streaming" % "2.0.0" % "provided",
+//    "commons-cli" % "commons-cli" % "1.2" % "provided",
+//    "com.github.scopt" %% "scopt" % "3.5.0"
+//  ),
   libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % "2.0.0" % "provided",
-    "org.apache.spark" %% "spark-sql" % "2.0.0" % "provided",
-    "org.apache.spark" %% "spark-streaming" % "2.0.0" % "provided",
-    "org.apache.spark" %% "spark-mllib" % "2.0.0" % "provided",
-    "org.apache.spark" %% "spark-streaming" % "2.0.0" % "provided",
-    "commons-cli" % "commons-cli" % "1.2" % "provided",
+    "org.apache.spark" %% "spark-core" % "2.0.0",
+    "org.apache.spark" %% "spark-sql" % "2.0.0",
+    "org.apache.spark" %% "spark-streaming" % "2.0.0",
+    "org.apache.spark" %% "spark-mllib" % "2.0.0",
+    "org.apache.spark" %% "spark-streaming" % "2.0.0",
+    "commons-cli" % "commons-cli" % "1.2",
     "com.github.scopt" %% "scopt" % "3.5.0"
   ),
   assemblyMergeStrategy in assembly := {
