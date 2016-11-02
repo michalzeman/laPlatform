@@ -39,7 +39,7 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
       val messageVal = write(KafkaIngestDataMessage(ingestData.value, ingestData.originator, now))
       log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
       val record = new ProducerRecord[Int, String](topic, ingestData.key, messageVal)
-      producer.send(record).get()
+      producer.send(record)
       sender ! DataIngested(messageVal)
   }
 
