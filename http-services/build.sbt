@@ -63,6 +63,10 @@ lazy val ingestServiceSettings = Seq(
   mainClass in assembly := Some("com.la.platform.ingest.IngestMain")
 )
 
+lazy val predictService = (project in file("predict-service"))
+  .settings(commonSettings: _*)
+  .dependsOn(commonApi)
+
 lazy val ingestService = (project in file("ingest-service"))
   .settings(commonSettings: _*)
   .settings(ingestServiceSettings: _*)

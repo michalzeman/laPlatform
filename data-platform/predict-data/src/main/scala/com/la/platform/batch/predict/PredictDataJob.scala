@@ -30,7 +30,7 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
     lines.map(con => con._2).foreachRDD(rdd => {
       rdd.foreachPartition(rddPart => {
         rddPart.foreach(rdd => {
-          kafkaProducer.value.send("ingest-data", rdd,"Zemo hi!!! from => "+rdd)
+          kafkaProducer.value.send("prediction-result", rdd,"Zemo hi!!! from => "+rdd)
         })
       })
     })
@@ -42,8 +42,8 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
   def getKafkaProps(opt: PredictDataParams): java.util.Map[String, Object] = {
     val props = new util.HashMap[String, Object]()
     props.put("bootstrap.servers", opt.getZkProducer)
-//    val guid = UUID.randomUUID().toString;
-    props.put("client.id", appName)
+    val guid = UUID.randomUUID().toString;
+    props.put("client.id", appName + guid)
     props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
     props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
     props

@@ -1,4 +1,4 @@
-package com.la.platform.ingest.common.util
+package com.la.platform
 
 import akka.actor.Extension
 import com.typesafe.config._

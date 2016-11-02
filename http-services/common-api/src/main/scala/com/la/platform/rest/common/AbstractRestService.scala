@@ -1,4 +1,4 @@
-package com.la.platform.ingest.rest.common
+package com.la.platform.rest.common
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport

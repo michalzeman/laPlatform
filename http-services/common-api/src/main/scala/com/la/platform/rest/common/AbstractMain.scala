@@ -1,4 +1,4 @@
-package com.la.platform.ingest.rest.common
+package com.la.platform.rest.common
 
 import java.lang.management.ManagementFactory
 
@@ -10,6 +10,7 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
+import com.la.platform.Settings
 import com.typesafe.config.Config
 
 import scala.annotation.tailrec
@@ -27,14 +28,16 @@ trait AbstractMain extends App {
 
   val logger = Logging(system, getClass)
 
+  lazy val settings = Settings(system.settings.config)
+
   private val restEndpoints = initRestEndpoints
 
   val routes = logRequestResult("", InfoLevel)(buildRoutes())
 
-  val bindingFuture: Future[ServerBinding] = Http().bindAndHandle(routes, getHttpInterface(system.settings.config), getHttpPort(system.settings.config))
+  val bindingFuture: Future[ServerBinding] = Http().bindAndHandle(routes, settings.Http.interface, settings.Http.port)
 
   bindingFuture.onFailure{ case ex: Exception =>
-    println(ex, "Failed to bind to {}:{}!", getHttpInterface(system.settings.config), getHttpPort(system.settings.config))
+    println(ex, "Failed to bind to {}:{}!", settings.Http.interface, settings.Http.port)
   }
 
   bindingFuture map { binding =>
@@ -79,19 +82,5 @@ trait AbstractMain extends App {
     * @return
     */
   def initRestEndpoints: List[RestEndpointRoute]
-
-  /**
-    * get Http address
-    * @param config
-    * @return
-    */
-  def getHttpInterface(config: Config): String
-
-  /**
-    * Get port number
-    * @param config
-    * @return
-    */
-  def getHttpPort(config: Config): Int
 
 }

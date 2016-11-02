@@ -3,7 +3,7 @@ package com.la.platform.ingest.actors
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.routing.FromConfig
 import com.la.platform.ingest.common.util.KafkaIngestSettings
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord, RecordMetadata}
+import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecord, RecordMetadata}
 import net.liftweb.json._
 import net.liftweb.json.Serialization.write
 
@@ -39,7 +39,15 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
       val messageVal = write(KafkaIngestDataMessage(ingestData.value, ingestData.originator, now))
       log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
       val record = new ProducerRecord[Int, String](topic, ingestData.key, messageVal)
-      producer.send(record)
+      producer.send(record, new Callback {
+        override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+          log.debug("produceData() -> finished")
+          if (exception != null) {
+            log.error(exception.getMessage, exception)
+          }
+        }
+      })
+//    producer.flush()
       sender ! DataIngested(messageVal)
   }
 
