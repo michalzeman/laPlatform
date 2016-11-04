@@ -23,7 +23,7 @@ class PredictKafkaProducerActor extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case msg:PredictKafkaProducerMsg => sendPredictMsgToKafka(msg)
-    case _ => {log.warning("problem !!!!!!!")}
+    case _ => log.warning("problem !!!!!!!")
   }
 
   /**

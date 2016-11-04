@@ -23,7 +23,7 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
 
     val kafkaProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProps(opt)))
 
-    val streamingContext = new StreamingContext(spark.sparkContext, Seconds(10))
+    val streamingContext = new StreamingContext(spark.sparkContext, Seconds(5))
 
     val kafkaParams = Map[String, Object](
       "bootstrap.servers" -> "localhost:9092",
@@ -46,12 +46,17 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
       .foreachRDD(
         rdd => {
           val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
-
-          rdd.foreachPartition(rddPart => {
-            rddPart.foreach(rdd => {
-              kafkaProducer.value.send("prediction-result", rdd, "Zemo hi!!! from => " + rdd)
-            })
-          })
+          spark.read.json(rdd).foreachPartition(rowIterator => rowIterator.foreach(row => {
+            val data = row.getAs[String]("data")
+            val sender = row.getAs[String]("sender")
+            val result =s"""{"data":"$data","sender":"$sender"}""".stripMargin
+            kafkaProducer.value.send("prediction-result", sender, result)
+          }))
+          //          rdd.foreachPartition(rddPart => {
+          //            rddPart.foreach(rdd => {
+          //              kafkaProducer.value.send("prediction-result", rdd, "Zemo hi!!! from => " + rdd)
+          //            })
+          //          })
         }
       )
 

@@ -15,10 +15,9 @@ class PredictActor extends Actor with ActorLogging with PredictKafkaActorSelecti
     case PredictRequestMsg(data) => {
       client = sender
       selectPredictKafkaProducerActor ! PredictKafkaProducerMsg(data)
-      client ! PredictResponseMsg("Now just Mock!!!")
     }
     case PredictKafkaConsumerMsg(result) => {
-
+      client ! PredictResponseMsg(result)
     }
   }
 

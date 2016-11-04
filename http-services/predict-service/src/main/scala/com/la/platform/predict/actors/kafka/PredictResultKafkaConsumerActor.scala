@@ -9,6 +9,8 @@ import akka.stream.scaladsl.Sink
 import com.la.platform.predict.actors.PredictActor.PredictResponseMsg
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
+import net.liftweb.json._
+import net.liftweb.json.Serialization.read
 
 import scala.concurrent.Future
 
@@ -21,22 +23,25 @@ class PredictResultKafkaConsumerActor extends Actor with ActorLogging {
 
   implicit val materializer = ActorMaterializer()
 
+  implicit val formats = DefaultFormats
+
   val consumerSettings = ConsumerSettings(context.system, new StringDeserializer, new StringDeserializer)
     .withBootstrapServers("localhost:9092")
     .withGroupId("PredictData")
-    .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
-//
-//  val sourceStream = Consumer.committableSource(consumerSettings, Subscriptions.topics("prediction-result"))
-//    .mapAsync(1) { msg =>
-//      val msgVal = msg.record.value()
-//      log.debug(s"Kafka consumer topic: prediction-result, message: $msgVal")
-//      Future.successful(Done).map(_ => msg)
-////      msg.committableOffset.commitScaladsl()
-//    }
-//    .mapAsync(1) { msg =>
+    .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
+
+  val sourceStream = Consumer.committableSource(consumerSettings, Subscriptions.topics("prediction-result"))
+    .mapAsync(1) { msg =>
+      val msgVal = msg.record.value()
+      log.debug(s"Kafka consumer topic: prediction-result, message: $msgVal")
+      processPredictionMeg(read[PredictionJsonMsg](msgVal))
+      Future.successful(Done).map(_ => msg)
 //      msg.committableOffset.commitScaladsl()
-//    }
-//    .runWith(Sink.ignore)
+    }
+    .mapAsync(1) { msg =>
+      msg.committableOffset.commitScaladsl()
+    }
+    .runWith(Sink.ignore)
 
 
   override def receive: Receive = {
@@ -53,7 +58,7 @@ class PredictResultKafkaConsumerActor extends Actor with ActorLogging {
   def processPredictionMeg(msg: PredictionJsonMsg): Unit = {
     Future {
       val orgPath = context.actorSelection(msg.sender)
-      orgPath ! PredictResponseMsg(msg.data)
+      orgPath ! PredictKafkaConsumerMsg(msg.data)
     }
   }
 }
