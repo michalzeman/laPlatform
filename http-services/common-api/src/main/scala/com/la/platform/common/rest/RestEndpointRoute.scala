@@ -1,4 +1,4 @@
-package com.la.platform.rest.common
+package com.la.platform.common.rest
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes._

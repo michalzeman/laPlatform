@@ -1,4 +1,4 @@
-package com.la.platform.rest.common
+package com.la.platform.common.rest
 
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model.headers.{Origin, `Access-Control-Allow-Credentials`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Origin`}

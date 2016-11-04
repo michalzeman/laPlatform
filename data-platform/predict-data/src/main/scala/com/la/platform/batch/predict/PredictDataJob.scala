@@ -5,8 +5,11 @@ import java.util.UUID
 
 import com.la.platform.batch.cli.DataJobMain
 import com.la.platform.batch.kafka.KafkaProducerWrapper
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.kafka.KafkaUtils
+import org.apache.spark.streaming.kafka010.ConsumerStrategies._
+import org.apache.spark.streaming.kafka010.KafkaUtils
+import org.apache.spark.streaming.kafka010.LocationStrategies._
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 /**
@@ -20,29 +23,46 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
 
     val kafkaProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProps(opt)))
 
-    val ssc = new StreamingContext(spark.sparkContext, Seconds(1))
+    val streamingContext = new StreamingContext(spark.sparkContext, Seconds(10))
 
-    ssc.checkpoint("checkpoint")
+    val kafkaParams = Map[String, Object](
+      "bootstrap.servers" -> "localhost:9092",
+      "key.deserializer" -> classOf[StringDeserializer],
+      "value.deserializer" -> classOf[StringDeserializer],
+      "group.id" -> appName,
+      "auto.offset.reset" -> "latest",
+      "enable.auto.commit" -> (false: java.lang.Boolean)
+    )
 
-    val inTopicMap = Map("predict" -> 1)
-    val lines = KafkaUtils.createStream(ssc, opt.getZkUrl, "PredictDataProducer", inTopicMap).filter(line => !line._2.isEmpty)
+    val topics = Array("prediction")
+    val stream = KafkaUtils.createDirectStream[String, String](
+      streamingContext,
+      PreferConsistent,
+      Subscribe[String, String](topics, kafkaParams)
+    )
 
-    lines.map(con => con._2).foreachRDD(rdd => {
-      rdd.foreachPartition(rddPart => {
-        rddPart.foreach(rdd => {
-          kafkaProducer.value.send("prediction-result", rdd,"Zemo hi!!! from => "+rdd)
-        })
-      })
-    })
+    stream.map(record => record.value)
+      .filter(record => !record.isEmpty)
+      .foreachRDD(
+        rdd => {
+          val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
 
-    ssc.start()
-    ssc.awaitTermination()
+          rdd.foreachPartition(rddPart => {
+            rddPart.foreach(rdd => {
+              kafkaProducer.value.send("prediction-result", rdd, "Zemo hi!!! from => " + rdd)
+            })
+          })
+        }
+      )
+
+    streamingContext.start()
+    streamingContext.awaitTermination()
   }
 
   def getKafkaProps(opt: PredictDataParams): java.util.Map[String, Object] = {
     val props = new util.HashMap[String, Object]()
     props.put("bootstrap.servers", opt.getZkProducer)
-    val guid = UUID.randomUUID().toString;
+    val guid = UUID.randomUUID().toString
     props.put("client.id", appName + guid)
     props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
     props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")

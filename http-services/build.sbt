@@ -3,6 +3,7 @@
 name := "http-services"
 
 val akkaV = "2.4.8"
+val kafkaV = "0.10.0.1"
 val scalaTestV = "2.2.6"
 
 lazy val commonSettings = Seq(
@@ -27,14 +28,14 @@ lazy val commonSettings = Seq(
     //DB dependencies
     "org.postgresql" % "postgresql" % "9.4-1203-jdbc42",
     "com.zaxxer" % "HikariCP" % "2.4.1",
-    "org.apache.kafka" % "kafka_2.11" % "0.9.0.1",
-    "org.apache.kafka" % "kafka-clients" % "0.9.0.1",
+    "org.apache.kafka" %% "kafka" % kafkaV,
+    "org.apache.kafka" % "kafka-clients" % kafkaV,
     "net.liftweb" % "lift-json_2.11" % "2.6.3"
   ),
   assemblyMergeStrategy in assembly := {
-    case PathList("com","la","platform", xs @ _*) => MergeStrategy.last
-    case PathList("org","slf4j", xs @ _*) => MergeStrategy.last
-    case PathList("org","aopalliance", xs @ _*) => MergeStrategy.last
+    case PathList("com", "la", "platform", xs@_*) => MergeStrategy.last
+    case PathList("org", "slf4j", xs@_*) => MergeStrategy.last
+    case PathList("org", "aopalliance", xs@_*) => MergeStrategy.last
     case PathList("javax", "inject", xs@_*) => MergeStrategy.last
     case PathList("javax", "servlet", xs@_*) => MergeStrategy.last
     case PathList("javax", "activation", xs@_*) => MergeStrategy.last
@@ -63,8 +64,13 @@ lazy val ingestServiceSettings = Seq(
   mainClass in assembly := Some("com.la.platform.ingest.IngestMain")
 )
 
+lazy val predictServiceSettings = Seq(
+  libraryDependencies ++= Seq("com.typesafe.akka" %% "akka-stream-kafka" % "0.13")
+)
+
 lazy val predictService = (project in file("predict-service"))
   .settings(commonSettings: _*)
+  .settings(predictServiceSettings: _*)
   .dependsOn(commonApi)
 
 lazy val ingestService = (project in file("ingest-service"))

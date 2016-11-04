@@ -2,6 +2,10 @@ name := "data-platform"
 
 version := "1.0"
 
+val kafkaV = "0.10.0.1"
+
+val sparkV = "2.0.0"
+
 lazy val commonSettings = Seq(
   organization := "com.la.platform.batch",
   version := "1.0",
@@ -18,11 +22,11 @@ lazy val commonSettings = Seq(
   //    "com.github.scopt" %% "scopt" % "3.5.0"
   //  ),
   libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % "2.0.0",
-    "org.apache.spark" %% "spark-sql" % "2.0.0",
-    "org.apache.spark" %% "spark-streaming" % "2.0.0",
-    "org.apache.spark" %% "spark-mllib" % "2.0.0",
-    "org.apache.spark" %% "spark-streaming" % "2.0.0",
+    "org.apache.spark" %% "spark-core" % sparkV,
+    "org.apache.spark" %% "spark-sql" % sparkV,
+    "org.apache.spark" %% "spark-streaming" % sparkV,
+    "org.apache.spark" %% "spark-mllib" % sparkV,
+    "org.apache.spark" %% "spark-streaming" % sparkV,
     "commons-cli" % "commons-cli" % "1.2",
     "com.github.scopt" %% "scopt" % "3.5.0"
   ),
@@ -52,9 +56,9 @@ lazy val commonSettings = Seq(
 
 lazy val kafkaDepSettings = Seq(
   libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-streaming-kafka-0-8" % "2.0.0",
-    "org.apache.kafka" % "kafka_2.11" % "0.9.0.1",
-    "org.apache.kafka" % "kafka-clients" % "0.9.0.1"
+    "org.apache.spark" % "spark-streaming-kafka-0-10_2.11" % sparkV,
+    "org.apache.kafka" % "kafka_2.11" % kafkaV,
+    "org.apache.kafka" % "kafka-clients" % kafkaV
   )
 )
 

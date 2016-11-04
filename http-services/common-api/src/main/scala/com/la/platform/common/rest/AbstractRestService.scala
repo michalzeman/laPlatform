@@ -1,4 +1,4 @@
-package com.la.platform.rest.common
+package com.la.platform.common.rest
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -35,7 +35,7 @@ abstract class AbstractRestService(implicit system: ActorSystem) extends RestEnd
     * @tparam R
     * @return
     */
-  def completeAndCleanUpAct[R](execute: => Future[R])(actors: ActorRef*): Future[R] = {
+  def completeAndCleanUpAct[R](execute: => Future[R], actors: ActorRef*): Future[R] = {
     execute.andThen {
       case Success(s) => {
         actors.foreach(actor => actor ! PoisonPill)

@@ -1,8 +1,8 @@
 package com.la.platform.ingest
 
+import com.la.platform.common.rest.{AbstractMain, RestEndpointRoute}
 import com.la.platform.ingest.actors.supervisors.IngestKafkaProducerSupervisorActor
 import com.la.platform.ingest.rest.IngestRestService
-import com.la.platform.rest.common.{AbstractMain, RestEndpointRoute}
 
 
 /**

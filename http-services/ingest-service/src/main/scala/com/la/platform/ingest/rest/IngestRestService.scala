@@ -4,9 +4,9 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern._
+import com.la.platform.common.rest.AbstractRestService
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData => ProduceData}
 import com.la.platform.ingest.actors.KafkaIngestProducerActorSelection
-import com.la.platform.rest.common.AbstractRestService
 
 import scala.concurrent.Future
 

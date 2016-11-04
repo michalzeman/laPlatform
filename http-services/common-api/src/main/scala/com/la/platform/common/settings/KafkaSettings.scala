@@ -1,4 +1,4 @@
-package com.la.platform.ingest.common.util
+package com.la.platform.common.settings
 
 import java.util.UUID
 
@@ -7,7 +7,7 @@ import com.typesafe.config.Config
 /**
   * Created by zemi on 26/10/2016.
   */
-class KafkaIngestSettings(config: Config) {
+class KafkaSettings(config: Config) {
 
   private val bootstrap_servers_key: String = "kafka.bootstrap.servers"
   private val client_id_key: String = "kafka.client.id"
@@ -19,6 +19,8 @@ class KafkaIngestSettings(config: Config) {
   val key_serializer = config.getString(key_serializer_key)
   val value_serializer = config.getString(value_serializer_key)
   val ingest_topic = config.getString("kafka.ingest.topic")
+
+  val polish = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm:ss.SSS")
 
   def getKafkaProps(): java.util.Properties = {
     val props = new java.util.Properties()
@@ -32,6 +34,6 @@ class KafkaIngestSettings(config: Config) {
 
 }
 
-object KafkaIngestSettings {
-  def apply(config: Config): KafkaIngestSettings = new KafkaIngestSettings(config)
+object KafkaSettings {
+  def apply(config: Config): KafkaSettings = new KafkaSettings(config)
 }

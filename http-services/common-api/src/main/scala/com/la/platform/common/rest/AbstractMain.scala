@@ -1,4 +1,4 @@
-package com.la.platform.rest.common
+package com.la.platform.common.rest
 
 import java.lang.management.ManagementFactory
 
@@ -10,7 +10,7 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
-import com.la.platform.Settings
+import com.la.platform.common.settings.Settings
 import com.typesafe.config.Config
 
 import scala.annotation.tailrec

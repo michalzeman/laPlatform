@@ -1,9 +1,14 @@
 package com.la.platform.predict.rest
 
-import akka.actor.ActorSystem
+import java.util.UUID
+
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
-import com.la.platform.rest.common.AbstractRestService
+import akka.pattern._
+import com.la.platform.common.rest.AbstractRestService
+import com.la.platform.predict.actors.PredictActor
+import com.la.platform.predict.actors.PredictActor.{PredictRequestMsg, PredictResponseMsg}
 
 import scala.concurrent.Future
 
@@ -15,7 +20,7 @@ class PredictRestService(implicit system: ActorSystem) extends AbstractRestServi
     path("predict") {
       post {
         entity(as[PredictRequest]) {
-          entity => complete("Ok")
+          entity => complete(predict(entity))
         }
       } ~ get {
         complete("Ok")
@@ -24,14 +29,25 @@ class PredictRestService(implicit system: ActorSystem) extends AbstractRestServi
 
   /**
     * Call prediction functionality
+    *
     * @param predict
     * @return
     */
   def predict(predict: PredictRequest): Future[PredictResponse] = {
-    completeAndCleanUpAct( {
-      Future {
-        PredictResponse("OK")
-      }
-    })
+    getPredictActor.flatMap(predictAct => completeAndCleanUpAct({
+        (predictAct ? PredictRequestMsg(predict.data)).mapTo[PredictResponseMsg]
+          .map(responseMsg => PredictResponse(responseMsg.result))
+      }, predictAct))
+  }
+
+  /**
+    * Create PredictActor
+    * @return actorRef
+    */
+  def getPredictActor: Future[ActorRef] = {
+    Future {
+      val uid = UUID.randomUUID().toString
+      system.actorOf(PredictActor.props, s"PredictActor_$uid")
+    }
   }
 }
