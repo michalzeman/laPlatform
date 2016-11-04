@@ -1,6 +1,8 @@
 package com.la.platform.batch.ingest
 
 
+import java.lang.Boolean
+
 import com.la.platform.batch.cli.DataJobMain
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{Seconds, StreamingContext}
@@ -22,14 +24,7 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
     val streamingContext = new StreamingContext(spark.sparkContext, Seconds(10))
 //    streamingContext.checkpoint("checkpoint")
 
-    val kafkaParams = Map[String, Object](
-      "bootstrap.servers" -> "localhost:9092",
-      "key.deserializer" -> classOf[StringDeserializer],
-      "value.deserializer" -> classOf[StringDeserializer],
-      "group.id" -> appName,
-      "auto.offset.reset" -> "latest",
-      "enable.auto.commit" -> (false: java.lang.Boolean)
-    )
+    val kafkaParams = consumerParams(opt)
 
     val topics = Array("ingest-data")
     val stream = KafkaUtils.createDirectStream[String, String](
@@ -58,6 +53,17 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
 
     streamingContext.start()
     streamingContext.awaitTermination()
+  }
+
+  def consumerParams(opt: IngestDataCliParams): Map[String, Object] = {
+    Map[String, Object](
+      "bootstrap.servers" -> opt.getZkUrl,
+      "key.deserializer" -> classOf[StringDeserializer],
+      "value.deserializer" -> classOf[StringDeserializer],
+      "group.id" -> appName,
+      "auto.offset.reset" -> "latest",
+      "enable.auto.commit" -> (false: Boolean)
+    )
   }
 
   override def appName: String = "IngestDataJob"

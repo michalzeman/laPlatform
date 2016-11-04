@@ -10,13 +10,10 @@ class PredictDataParams(args: Array[String]) extends CliParams(args) {
 
   override protected def buildOptions: Options = {
     val zkUrl = buildOption("zkC", "zkUrl", true, "Url to zookeeper service")
-    val zkProducerUrl = buildOption("zkP", "zkProducerUrl", true, "Url to zookeeper service producer")
-    super.buildOptions.addOption(zkUrl).addOption(zkProducerUrl)
+    super.buildOptions.addOption(zkUrl)
   }
 
   def getZkUrl: String = cmd.getOptionValue("zkUrl")
-
-  def getZkProducer:String = cmd.getOptionValue("zkProducerUrl")
 
 }
 

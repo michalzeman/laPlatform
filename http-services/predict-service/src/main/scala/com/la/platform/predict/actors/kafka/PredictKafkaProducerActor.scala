@@ -19,7 +19,7 @@ class PredictKafkaProducerActor extends Actor with ActorLogging {
 
   val topic = settings.ingest_topic
 
-  val producer = new KafkaProducer[Int, String](settings.getKafkaProps)
+  val producer = new KafkaProducer[Int, String](settings.getKafkaProducerProps)
 
   override def receive: Receive = {
     case msg:PredictKafkaProducerMsg => sendPredictMsgToKafka(msg)

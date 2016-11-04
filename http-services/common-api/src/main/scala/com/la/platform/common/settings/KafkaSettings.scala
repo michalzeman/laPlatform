@@ -9,24 +9,23 @@ import com.typesafe.config.Config
   */
 class KafkaSettings(config: Config) {
 
-  private val bootstrap_servers_key: String = "kafka.bootstrap.servers"
-  private val client_id_key: String = "kafka.client.id"
-  private val key_serializer_key: String = "kafka.key.serializer"
-  private val value_serializer_key: String = "kafka.value.serializer"
+  private val bootstrap_servers_key: String = "kafka.producer.bootstrap.servers"
+  private val client_id_key: String = "kafka.producer.client.id"
+  private val key_serializer_key: String = "kafka.producer.key.serializer"
+  private val value_serializer_key: String = "kafka.producer.value.serializer"
 
   val bootstrap_servers = config.getString(bootstrap_servers_key)
   val client_id = config.getString(client_id_key)
   val key_serializer = config.getString(key_serializer_key)
   val value_serializer = config.getString(value_serializer_key)
-  val ingest_topic = config.getString("kafka.ingest.topic")
+  val ingest_topic = config.getString("kafka.producer.topic")
 
   val polish = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm:ss.SSS")
 
-  def getKafkaProps(): java.util.Properties = {
+  def getKafkaProducerProps(): java.util.Properties = {
     val props = new java.util.Properties()
     props.put("bootstrap.servers", bootstrap_servers)
-    val guid = UUID.randomUUID().toString;
-    props.put("client.id", client_id+guid)
+    props.put("client.id", client_id+UUID.randomUUID().toString)
     props.put("key.serializer", key_serializer)
     props.put("value.serializer", value_serializer)
     props

@@ -1,5 +1,6 @@
 package com.la.platform.batch.predict
 
+import java.lang.Boolean
 import java.util
 import java.util.UUID
 
@@ -17,22 +18,17 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
   */
 object PredictDataJob extends DataJobMain[PredictDataParams] {
 
-  override def appName: String = "PredictData"
+  override def appName: String = {
+    "PredictData" + UUID.randomUUID().toString
+  }
 
   override def run(spark: SparkSession, opt: PredictDataParams): Unit = {
 
-    val kafkaProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProps(opt)))
+    val kafkaProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProducerProp(opt)))
 
     val streamingContext = new StreamingContext(spark.sparkContext, Seconds(5))
 
-    val kafkaParams = Map[String, Object](
-      "bootstrap.servers" -> "localhost:9092",
-      "key.deserializer" -> classOf[StringDeserializer],
-      "value.deserializer" -> classOf[StringDeserializer],
-      "group.id" -> appName,
-      "auto.offset.reset" -> "latest",
-      "enable.auto.commit" -> (false: java.lang.Boolean)
-    )
+    val kafkaParams = getKafkaConsumerProp(opt)
 
     val topics = Array("prediction")
     val stream = KafkaUtils.createDirectStream[String, String](
@@ -52,11 +48,6 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
             val result =s"""{"data":"$data","sender":"$sender"}""".stripMargin
             kafkaProducer.value.send("prediction-result", sender, result)
           }))
-          //          rdd.foreachPartition(rddPart => {
-          //            rddPart.foreach(rdd => {
-          //              kafkaProducer.value.send("prediction-result", rdd, "Zemo hi!!! from => " + rdd)
-          //            })
-          //          })
         }
       )
 
@@ -64,11 +55,21 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
     streamingContext.awaitTermination()
   }
 
-  def getKafkaProps(opt: PredictDataParams): java.util.Map[String, Object] = {
+  def getKafkaConsumerProp(opt: PredictDataParams): Map[String, Object] = {
+    Map[String, Object](
+      "bootstrap.servers" -> opt.getZkUrl,
+      "key.deserializer" -> classOf[StringDeserializer],
+      "value.deserializer" -> classOf[StringDeserializer],
+      "group.id" -> appName,
+      "auto.offset.reset" -> "latest",
+      "enable.auto.commit" -> (false: Boolean)
+    )
+  }
+
+  def getKafkaProducerProp(opt: PredictDataParams): java.util.Map[String, Object] = {
     val props = new util.HashMap[String, Object]()
-    props.put("bootstrap.servers", opt.getZkProducer)
-    val guid = UUID.randomUUID().toString
-    props.put("client.id", appName + guid)
+    props.put("bootstrap.servers", opt.getZkUrl)
+    props.put("client.id", appName)
     props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
     props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
     props
