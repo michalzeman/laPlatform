@@ -7,7 +7,6 @@ val kafkaV = "0.10.0.1"
 val sparkV = "2.0.0"
 
 lazy val commonSettings = Seq(
-  organization := "com.la.platform.batch",
   version := "1.0",
   scalaVersion := "2.11.8",
   scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),
@@ -29,7 +28,9 @@ lazy val commonSettings = Seq(
     "org.apache.spark" %% "spark-streaming" % sparkV,
     "commons-cli" % "commons-cli" % "1.2",
     "com.github.scopt" %% "scopt" % "3.5.0"
-  ),
+  ))
+
+lazy val assemblySettings = Seq(
   assemblyMergeStrategy in assembly := {
     case PathList("com", "la", "platform", xs@_*) => MergeStrategy.last
     case PathList("org", "slf4j", xs@_*) => MergeStrategy.last
@@ -52,7 +53,8 @@ lazy val commonSettings = Seq(
     case x =>
       val oldStrategy = (assemblyMergeStrategy in assembly).value
       oldStrategy(x)
-  })
+  }
+)
 
 lazy val kafkaDepSettings = Seq(
   libraryDependencies ++= Seq(
@@ -62,22 +64,40 @@ lazy val kafkaDepSettings = Seq(
   )
 )
 
+lazy val commonDataApiSettings = Seq(
+  organization := "com.la.platform.batch"
+)
+
 lazy val commonDataApi = (project in file("common-data-api"))
   .settings(commonSettings: _*)
+  .settings(commonDataApiSettings: _*)
+  .settings(assemblySettings: _*)
   .settings(kafkaDepSettings: _*)
+
+lazy val ingestDataSettings = Seq(
+  organization := "com.la.platform.batch.ingest"
+)
 
 lazy val ingestData = (project in file("ingest-data"))
   .settings(commonSettings: _*)
+  .settings(ingestDataSettings: _*)
   .settings(kafkaDepSettings: _*)
+  .settings(assemblySettings: _*)
   .dependsOn(commonDataApi)
+
+lazy val predictDataSettings = Seq(
+  organization := "com.la.platform.batch.predict"
+)
 
 lazy val predictData = (project in file("predict-data"))
   .settings(commonSettings: _*)
+  .settings(predictDataSettings: _*)
   .settings(kafkaDepSettings: _*)
+  .settings(assemblySettings: _*)
   .dependsOn(commonDataApi)
 
 lazy val dataPlatform =
   project.in(file("."))
-    .aggregate(ingestData, commonDataApi)
+    .aggregate(ingestData, predictData)
 
 resolvers += Resolver.mavenLocal
