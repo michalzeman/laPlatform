@@ -1,4 +1,4 @@
-package com.la.platform.predict.actors.kafka
+package com.la.platform.ingest.actors
 
 import java.util.Properties
 
@@ -9,7 +9,7 @@ import com.typesafe.config.Config
 /**
   * Created by zemi on 07/11/2016.
   */
-class PredictKafkaProducerFactory(config: Config) extends ProducerFactory[Int, String] {
+class KafkaIngestProducerFactory(config: Config) extends ProducerFactory[Int, String] {
 
   val settings = KafkaSettings(config)
 
@@ -18,6 +18,6 @@ class PredictKafkaProducerFactory(config: Config) extends ProducerFactory[Int, S
   override def getTopic: String = settings.topic
 }
 
-object PredictKafkaProducerFactory {
-  def apply(config: Config): PredictKafkaProducerFactory = new PredictKafkaProducerFactory(config)
+object KafkaIngestProducerFactory {
+  def apply(config: Config): KafkaIngestProducerFactory = new KafkaIngestProducerFactory(config)
 }

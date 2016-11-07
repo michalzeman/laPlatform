@@ -1,60 +1,42 @@
 package com.la.platform.ingest.actors
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.Props
 import akka.routing.FromConfig
-import com.la.platform.common.settings.KafkaSettings
-import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecord, RecordMetadata}
-import net.liftweb.json._
+import com.la.platform.common.actors.kafka.producer.{AbstractKafkaProducerActor, ProducerFactory}
+import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData}
+import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
 import net.liftweb.json.Serialization.write
 
 /**
   * Created by zemi on 25/10/2016.
   */
-class KafkaIngestProducerActor extends Actor with ActorLogging {
+class KafkaIngestProducerActor(producerFactory: ProducerFactory[Int, String])
+  extends AbstractKafkaProducerActor[IngestData, Int, String](producerFactory) {
 
-  import KafkaIngestProducerActor._
-
-  implicit val formats = DefaultFormats
-
-  val settings = KafkaSettings(context.system.settings.config)
-
-  val topic = settings.ingest_topic
-
-  val producer = new KafkaProducer[Int, String](settings.getKafkaProducerProps)
-
-
-  override def receive: Receive = {
-    case data:IngestData => produceData(data)
-  }
 
   /**
     * Produce event into the kafka
+    *
     * @param ingestData
     */
-  private def produceData(ingestData: IngestData): Unit = {
+  override def sendMsgToKafka(ingestData: IngestData): Unit = {
     log.info(s"${getClass.getCanonicalName} produceData() ->")
-      val now = java.time.LocalDateTime.now().format(settings.polish)
-      val messageVal = write(KafkaIngestDataMessage(ingestData.value, ingestData.originator, now))
-      log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
-      val record = new ProducerRecord[Int, String](topic, ingestData.key, messageVal)
-      producer.send(record, new Callback {
-        override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
-          log.debug("produceData() -> finished")
-          if (exception != null) {
-            log.error(exception.getMessage, exception)
-          }
+    val now = java.time.LocalDateTime.now().format(settings.polish)
+    val messageVal = write(KafkaIngestDataMessage(ingestData.value, ingestData.originator, now))
+    log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
+    val record = new ProducerRecord[Int, String](topic, ingestData.key, messageVal)
+    producer.send(record, new Callback {
+      override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+        log.debug("produceData() -> finished")
+        if (exception != null) {
+          log.error(exception.getMessage, exception)
         }
-      })
-//    producer.flush()
-      sender ! DataIngested(messageVal)
+      }
+    })
+    producer.flush()
+    sender ! DataIngested(messageVal)
   }
 
-  @scala.throws[Exception](classOf[Exception])
-  override def postStop(): Unit = {
-    log.info(s"${getClass.getCanonicalName} postStop -> going to close producer")
-    producer.close()
-    super.postStop()
-  }
 }
 
 object KafkaIngestProducerActor {
@@ -65,6 +47,6 @@ object KafkaIngestProducerActor {
 
   val ACTOR_NAME = "kafkaIngestProducer"
 
-//  def props: Props = Props[KafkaIngestProducerActor]
-  def props: Props = FromConfig.props(Props[KafkaIngestProducerActor])
+  //  def props: Props = Props[KafkaIngestProducerActor]
+  def props(producerFactory: KafkaIngestProducerFactory): Props = FromConfig.props(Props(classOf[KafkaIngestProducerActor], producerFactory))
 }

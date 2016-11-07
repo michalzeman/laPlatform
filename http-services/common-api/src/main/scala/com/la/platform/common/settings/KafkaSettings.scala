@@ -18,7 +18,7 @@ class KafkaSettings(config: Config) {
   val client_id = config.getString(client_id_key)
   val key_serializer = config.getString(key_serializer_key)
   val value_serializer = config.getString(value_serializer_key)
-  val ingest_topic = config.getString("kafka.producer.topic")
+  val topic = config.getString("kafka.producer.topic")
 
   val polish = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm:ss.SSS")
 

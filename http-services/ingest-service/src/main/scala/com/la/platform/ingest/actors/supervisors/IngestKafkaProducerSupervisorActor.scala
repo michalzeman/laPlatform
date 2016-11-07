@@ -2,14 +2,15 @@ package com.la.platform.ingest.actors.supervisors
 
 import akka.actor.Props
 import com.la.platform.common.actors.kafka.KafkaSupervisorActor
-import com.la.platform.ingest.actors.KafkaIngestProducerActor
+import com.la.platform.ingest.actors.{KafkaIngestProducerActor, KafkaIngestProducerFactory}
 
 /**
   * Created by zemi on 26/10/2016.
   */
 class IngestKafkaProducerSupervisorActor extends KafkaSupervisorActor {
 
-  val kafkaIngestProducerActor = context.actorOf(KafkaIngestProducerActor.props, KafkaIngestProducerActor.ACTOR_NAME)
+  val kafkaIngestProducerActor = context.actorOf(KafkaIngestProducerActor.props(KafkaIngestProducerFactory(context.system.settings.config)),
+    KafkaIngestProducerActor.ACTOR_NAME)
 
   context.watch(kafkaIngestProducerActor)
 

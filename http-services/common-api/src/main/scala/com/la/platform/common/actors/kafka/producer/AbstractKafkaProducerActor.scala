@@ -14,7 +14,7 @@ abstract class AbstractKafkaProducerActor[M, K, V](producerFactory: ProducerFact
 
   val settings = KafkaSettings(context.system.settings.config)
 
-  val topic = settings.ingest_topic
+  val topic = settings.topic
 
   val producer = new KafkaProducer[Int, String](settings.getKafkaProducerProps)
 
