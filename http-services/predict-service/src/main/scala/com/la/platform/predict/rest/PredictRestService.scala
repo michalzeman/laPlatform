@@ -9,7 +9,7 @@ import akka.pattern._
 import akka.util.Timeout
 import com.la.platform.common.rest.AbstractRestService
 import com.la.platform.predict.actors.PredictActor
-import com.la.platform.predict.actors.PredictActor.{PredictRequestMsg, PredictResponseMsg}
+import com.la.platform.predict.actors.kafka.{PredictRequestMsg, PredictResponseMsg}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

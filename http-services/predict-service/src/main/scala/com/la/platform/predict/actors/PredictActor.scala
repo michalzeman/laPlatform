@@ -1,8 +1,7 @@
 package com.la.platform.predict.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import com.la.platform.predict.actors.PredictActor.{PredictRequestMsg, PredictResponseMsg}
-import com.la.platform.predict.actors.kafka.{PredictKafkaConsumerMsg, PredictKafkaProducerMsg}
+import com.la.platform.predict.actors.kafka.{PredictResponseMsg, PredictRequestMsg}
 
 /**
   * Created by zemi on 03/11/2016.
@@ -12,22 +11,18 @@ class PredictActor extends Actor with ActorLogging with PredictKafkaActorSelecti
   var client:ActorRef = _
 
   override def receive: Receive = {
-    case PredictRequestMsg(data) => {
+    case msg:PredictRequestMsg => {
       client = sender
-      selectPredictKafkaProducerActor ! PredictKafkaProducerMsg(data)
+      selectPredictKafkaProducerActor ! msg
     }
-    case PredictKafkaConsumerMsg(result) => {
-      client ! PredictResponseMsg(result)
+    case msg:PredictResponseMsg => {
+      client ! msg
     }
   }
 
 }
 
 object PredictActor {
-
-  case class PredictRequestMsg(data: String)
-
-  case class PredictResponseMsg(result: String)
 
   def props: Props = Props[PredictActor]
 

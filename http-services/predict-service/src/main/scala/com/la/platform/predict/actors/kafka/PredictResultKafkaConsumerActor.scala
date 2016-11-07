@@ -6,7 +6,6 @@ import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.kafka.scaladsl.Consumer
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
-import com.la.platform.predict.actors.PredictActor.PredictResponseMsg
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import net.liftweb.json._
@@ -58,7 +57,7 @@ class PredictResultKafkaConsumerActor extends Actor with ActorLogging {
   def processPredictionMeg(msg: PredictionJsonMsg): Unit = {
     Future {
       val orgPath = context.actorSelection(msg.sender)
-      orgPath ! PredictKafkaConsumerMsg(msg.data)
+      orgPath ! PredictResponseMsg(msg.data)
     }
   }
 }

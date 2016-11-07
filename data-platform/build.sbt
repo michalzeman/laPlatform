@@ -83,7 +83,7 @@ lazy val ingestData = (project in file("ingest-data"))
   .settings(ingestDataSettings: _*)
   .settings(kafkaDepSettings: _*)
   .settings(assemblySettings: _*)
-  .dependsOn(commonDataApi)
+  .dependsOn(classpathDependency(commonDataApi))
 
 lazy val predictDataSettings = Seq(
   organization := "com.la.platform.batch.predict"
@@ -94,7 +94,7 @@ lazy val predictData = (project in file("predict-data"))
   .settings(predictDataSettings: _*)
   .settings(kafkaDepSettings: _*)
   .settings(assemblySettings: _*)
-  .dependsOn(commonDataApi)
+  .dependsOn(classpathDependency(commonDataApi))
 
 lazy val dataPlatform =
   project.in(file("."))

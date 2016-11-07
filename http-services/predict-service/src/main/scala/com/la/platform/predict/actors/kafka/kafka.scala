@@ -5,11 +5,13 @@ package com.la.platform.predict.actors
   */
 package object kafka {
 
-  case class PredictKafkaConsumerMsg(result: String)
+  case class PredictResponseMsg(result: String)
 
   case class PredictionJsonMsg(data: String, sender: String)
 
-  case class PredictKafkaProducerMsg(data: String)
+  case class PredictRequestMsg(data: String)
+
+  case object PredictRequestMsgSent
 
   case class PredictKafkaProducerUnsupportedOpr(msg: String)
 }
