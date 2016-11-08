@@ -4,10 +4,12 @@ package com.la.platform.batch.ingest
 import java.lang.Boolean
 
 import com.la.platform.batch.cli.DataJobMain
+import com.la.platform.batch.common.constants._
+
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.spark.SparkContext
 import org.apache.spark.streaming.kafka010._
 import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
@@ -22,7 +24,7 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
     val workingDirectory = opt.dataDir
 
     val streamingContext = new StreamingContext(spark.sparkContext, Seconds(10))
-//    streamingContext.checkpoint("checkpoint")
+    //    streamingContext.checkpoint("checkpoint")
 
     val kafkaParams = consumerParams(opt)
 
@@ -33,24 +35,20 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
       Subscribe[String, String](topics, kafkaParams)
     )
 
-    stream.map(record => record.value)
-      .filter(record => !record.isEmpty)
+    stream
+      .map(record => record.value)
       .foreachRDD(
-      rdd => {
-        val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
-        rdd.saveAsTextFile(workingDirectory + "/data/ingest")
-        val json = spark.read.json(rdd)
-        json.show()
-      })
-    //    val lines = KafkaUtils.createDirectStream(ssc, opt.getZkUrl, "test", topicMap).filter(line => !line._2.isEmpty)
-    //
-    //    lines.map(con => con._2).foreachRDD(rdd => {
-    //      val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
-    //      rdd.saveAsTextFile(workingDirectory + "/data/ingest")
-    //      val json = spark.read.json(rdd)
-    //      json.show()
-    //    })
-
+        rdd => {
+          val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
+          rdd.map(strVal => {
+            val scMap = SparkContext.getOrCreate()
+            scMap.parallelize(Seq(strVal))
+          }).foreach(rddFiltered =>
+            rddFiltered.saveAsTextFile(workingDirectory + s"${INGEST_DATA_PREFIX_PATH}${java.util.UUID.randomUUID.toString}-${System.currentTimeMillis}")
+          )
+          val json = spark.read.json(rdd)
+          json.show()
+        })
     streamingContext.start()
     streamingContext.awaitTermination()
   }
