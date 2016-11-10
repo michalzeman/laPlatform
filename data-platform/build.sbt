@@ -96,8 +96,14 @@ lazy val predictData = (project in file("predict-data"))
   .settings(assemblySettings: _*)
   .dependsOn(classpathDependency(commonDataApi))
 
+lazy val transformData = (project in file("transform-data"))
+  .settings(commonSettings: _*)
+  .settings(assemblySettings: _*)
+  .dependsOn(classpathDependency(commonDataApi))
+
 lazy val dataPlatform =
   project.in(file("."))
-    .aggregate(ingestData, predictData)
+    .aggregate(ingestData, predictData, transformData)
+
 
 resolvers += Resolver.mavenLocal

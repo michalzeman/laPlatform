@@ -5,8 +5,8 @@ package com.la.platform.batch.common
   */
 object constants {
 
-  val INGEST_DATA_PREFIX_PATH_WILDCARD = "/data/ingest-*"
+  val INGEST_DATA_PREFIX_PATH_WILDCARD = "ingest-*"
 
-  val INGEST_DATA_PREFIX_PATH = "/data/ingest-"
+  val INGEST_DATA_PREFIX_PATH = "ingest-"
 
 }
