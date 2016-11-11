@@ -85,6 +85,10 @@ lazy val ingestData = (project in file("ingest-data"))
   .settings(assemblySettings: _*)
   .dependsOn(classpathDependency(commonDataApi))
 
+lazy val trainingLgModelData = (project in file("training-lg-model-data"))
+  .settings(commonSettings: _*)
+  .dependsOn(classpathDependency(commonDataApi))
+
 lazy val predictDataSettings = Seq(
   organization := "com.la.platform.batch.predict"
 )
@@ -99,11 +103,12 @@ lazy val predictData = (project in file("predict-data"))
 lazy val transformData = (project in file("transform-data"))
   .settings(commonSettings: _*)
   .settings(assemblySettings: _*)
+  .settings(Seq(organization := "com.la.platform.batch.transform"): _*)
   .dependsOn(classpathDependency(commonDataApi))
 
 lazy val dataPlatform =
   project.in(file("."))
-    .aggregate(ingestData, predictData, transformData)
+    .aggregate(ingestData, predictData, transformData, trainingLgModelData)
 
 
 resolvers += Resolver.mavenLocal
