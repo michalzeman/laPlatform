@@ -41,7 +41,8 @@ object TransformDataJob extends DataJobMain[CliParams] {
         new LabeledPoint(label, features)
       }))
     svmModel.foreach(rdd => {
-      MLUtils.saveAsLibSVMFile(rdd.rdd, s"${workingDir}/../mllib/lg_svm-${java.util.UUID.randomUUID.toString}")
+      //FIXME: change the path!!!!
+      MLUtils.saveAsLibSVMFile(rdd.rdd, s"${workingDir}/../mllib/svm_data/lg_svm-${java.util.UUID.randomUUID.toString}")
     })
   }
 

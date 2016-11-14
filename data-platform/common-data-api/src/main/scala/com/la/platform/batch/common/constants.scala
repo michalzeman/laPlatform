@@ -9,4 +9,6 @@ object constants {
 
   val INGEST_DATA_PREFIX_PATH = "ingest-"
 
+  val LG_SVM_PATH_WILDCARD = "svm_data/lg_svm-*"
+
 }
