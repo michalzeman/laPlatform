@@ -7,6 +7,9 @@ import java.util.UUID
 import com.la.platform.batch.cli.DataJobMain
 import com.la.platform.batch.kafka.KafkaProducerWrapper
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.spark.SparkContext
+import org.apache.spark.ml.classification.LogisticRegressionModel
+import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.kafka010.ConsumerStrategies._
 import org.apache.spark.streaming.kafka010.KafkaUtils
@@ -26,6 +29,8 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
 
     val kafkaProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProducerProp(opt)))
 
+    val lrModel = spark.sparkContext.broadcast(LogisticRegressionModel.load("/Users/zemo/projects/lambda_architecture/repo/laPlatform/resources/mllib/lr/model"))
+
     val streamingContext = new StreamingContext(spark.sparkContext, Seconds(5))
 
     val kafkaParams = getKafkaConsumerProp(opt)
@@ -44,8 +49,17 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
           val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
           spark.read.json(rdd).foreachPartition(rowIterator => rowIterator.foreach(row => {
             val data = row.getAs[String]("data")
+            val features = Vectors.dense(data.split(" ").map(item => item.split(":")(1)).map(_.toDouble))
+            val sparkPred = SparkSession.builder.config(SparkContext.getOrCreate().getConf).getOrCreate()
+            //FIXME:
+            val forPredictionDF = sparkPred.createDataFrame(Seq(
+              (0.0, features)
+            )).toDF("label", "features").select("features")
+            val predResultList = lrModel.value.transform(forPredictionDF)
+              .select("prediction").collect().toList
+            val predResult = if (predResultList.isEmpty) "error" else predResultList.head.get(0).toString
             val sender = row.getAs[String]("sender")
-            val result =s"""{"data":"$data","sender":"$sender"}""".stripMargin
+            val result =s"""{"data":"$predResult","sender":"$sender"}""".stripMargin
             kafkaProducer.value.send("prediction-result", sender, result)
           }))
         }
