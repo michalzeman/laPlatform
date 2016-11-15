@@ -1,11 +1,12 @@
 package com.la.platform.batch.cli
 
+import com.la.platform.batch.common.SparkUtils
 import org.apache.spark.sql.SparkSession
 
 /**
   * Created by zemi on 28/10/2016.
   */
-trait DataJobMain[C <: CliParams] {
+trait DataJobMain[C <: CliParams] extends SparkUtils {
 
   def main(args: Array[String]): Unit = {
 

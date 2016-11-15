@@ -1,7 +1,7 @@
 package com.la.platform.batch.training.lg
 
 import com.la.platform.batch.cli.{CliParams, DataJobMain}
-import com.la.platform.batch.ml.LabeledPointSVMUtil.loadDDRLibSVMFiles
+import com.la.platform.batch.ml.SvmIOUtils.loadDDRLibSVMFiles
 import com.la.platform.batch.common.constants._
 
 import org.apache.spark.ml.classification.LogisticRegression

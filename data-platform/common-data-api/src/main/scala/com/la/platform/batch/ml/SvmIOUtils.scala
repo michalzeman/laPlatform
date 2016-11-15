@@ -1,9 +1,9 @@
 package com.la.platform.batch.ml
 
 
+import com.la.platform.batch.common.SparkUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.mllib.util.MLUtils.loadLibSVMFile
 import org.apache.spark.rdd.RDD
 
@@ -12,7 +12,7 @@ import scala.annotation.tailrec
 /**
   * Created by zemi on 10/11/2016.
   */
-object LabeledPointSVMUtil {
+object SvmIOUtils extends SparkUtils {
 
 
   //TODO: optimize names could be millions, better it would be to wrap into RDD!!!
@@ -20,10 +20,10 @@ object LabeledPointSVMUtil {
     case head::tail => {
       @tailrec
       def loadDDRLibSVMFile(accRdd: RDD[LabeledPoint], namesFiles: List[String]): RDD[LabeledPoint] = namesFiles match {
-        case name :: namesTail => loadDDRLibSVMFile(accRdd ++ loadLibSVMFile(SparkContext.getOrCreate(), name),namesTail)
+        case name :: namesTail => loadDDRLibSVMFile(accRdd ++ loadLibSVMFile(getSparkContext, name),namesTail)
         case Nil => accRdd
       }
-      loadDDRLibSVMFile(loadLibSVMFile(SparkContext.getOrCreate(), names.head), names.tail)
+      loadDDRLibSVMFile(loadLibSVMFile(getSparkContext, names.head), names.tail)
     }
     case Nil => SparkContext.getOrCreate().emptyRDD
   }
@@ -34,10 +34,10 @@ object LabeledPointSVMUtil {
     * @return RDD[LabeledPoint]
     */
   def loadDDRLibSVMFiles(nameDir: String): RDD[LabeledPoint] = {
-    val sc = SparkContext.getOrCreate()
+    val sc = getSparkContext
     sc.wholeTextFiles(nameDir, 2)
       .filter(!_._2.isEmpty).map(_._1)
-      .flatMap(fileName => loadLibSVMFile(SparkContext.getOrCreate(), fileName).collect())
+      .flatMap(fileName => loadLibSVMFile(getSparkContext, fileName).collect())
   }
 
 }
