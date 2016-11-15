@@ -21,13 +21,6 @@ object TransformDataJob extends DataJobMain[CliParams] {
         MLUtils.saveAsLibSVMFile(rdd.rdd, s"$workingDir/../mllib/svm_data/lg_svm-${java.util.UUID.randomUUID.toString}"))
   }
 
-  def mapFeatures(x1: Double, x2: Double, degree: Int): List[Double] = {
-    val features = for {i <- 1 to degree
-                        j <- 0 to i
-    } yield Math.pow(x1, i - 1) * Math.pow(x2, j)
-    1 :: features.toList
-  }
-
   override def getCliContext(args: Array[String]): CliParams = CliParams(args)
 
 }
