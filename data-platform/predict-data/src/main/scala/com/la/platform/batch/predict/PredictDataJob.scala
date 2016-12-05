@@ -26,11 +26,14 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
 
   override def run(spark: SparkSession, opt: PredictDataParams): Unit = {
 
-    val kafkaProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProducerProp(opt)))
+    val kafkaPredictionResultProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProducerProp(opt)))
 
-    val lrModel = spark.sparkContext.broadcast(LogisticRegressionModel.load("/Users/zemo/projects/lambda_architecture/repo/laPlatform/resources/mllib/lr/model"))
+    val kafkaPredictionDataProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProducerProp(opt)))
+
+    val lrModel = spark.sparkContext.broadcast(LogisticRegressionModel.load(opt.dataDir+"mllib/lr/model"))
 
     val streamingContext = new StreamingContext(spark.sparkContext, Seconds(5))
+//    val streamingContext = new StreamingContext(spark.sparkContext, Milliseconds(200))
 
     val kafkaParams = getKafkaConsumerProp(opt)
 
@@ -50,7 +53,10 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
             val predResult = predict(row, lrModel.value)
             val sender = row.getAs[String]("sender")
             val result =s"""{"data":"$predResult","sender":"$sender"}""".stripMargin
-            kafkaProducer.value.send("prediction-result", sender, result)
+            kafkaPredictionResultProducer.value.send("prediction-result", sender, result)
+            val data = row.getAs[String]("data")
+            val speedData = s"""{"prediction":"$predResult","data":"$data"}""".stripMargin
+            kafkaPredictionDataProducer.value.send("prediction-data", UUID.randomUUID().toString, speedData)
           }))
         }
       )

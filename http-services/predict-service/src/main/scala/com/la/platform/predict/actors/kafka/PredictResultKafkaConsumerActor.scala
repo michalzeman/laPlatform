@@ -4,8 +4,8 @@ import akka.Done
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.kafka.scaladsl.Consumer
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Sink
+import akka.stream.{ActorMaterializer, IOResult}
+import akka.stream.scaladsl.{Flow, Sink}
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import net.liftweb.json._
@@ -27,10 +27,11 @@ class PredictResultKafkaConsumerActor extends Actor with ActorLogging {
   val consumerSettings = ConsumerSettings(context.system, new StringDeserializer, new StringDeserializer)
     .withBootstrapServers("localhost:9092")
     .withGroupId("PredictData")
-    .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
+//    .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
+    .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
   val sourceStream = Consumer.committableSource(consumerSettings, Subscriptions.topics("prediction-result"))
-    .mapAsync(1) { msg =>
+  sourceStream.mapAsync(1) { msg =>
       val msgVal = msg.record.value()
       log.debug(s"Kafka consumer topic: prediction-result, message: $msgVal")
       processPredictionMeg(read[PredictionJsonMsg](msgVal))

@@ -71,16 +71,21 @@ lazy val predictServiceSettings = Seq(
 lazy val predictService = (project in file("predict-service"))
   .settings(commonSettings: _*)
   .settings(predictServiceSettings: _*)
-  .dependsOn(commonApi)
+  .dependsOn(classpathDependency(commonApi))
 
 lazy val ingestService = (project in file("ingest-service"))
   .settings(commonSettings: _*)
   .settings(ingestServiceSettings: _*)
-  .dependsOn(commonApi)
+  .dependsOn(classpathDependency(commonApi))
+
+lazy val `speed-service` = (project in file("speed-service"))
+  .settings(commonSettings: _*)
+  .settings(predictServiceSettings: _*)
+  .dependsOn(classpathDependency(commonApi))
 
 lazy val httpServices =
   project.in(file("."))
-    .aggregate(commonApi, ingestService)
+    .aggregate(predictService, ingestService, `speed-service`)
 
 
 
