@@ -28,8 +28,6 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
 
     val kafkaPredictionResultProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProducerProp(opt)))
 
-    val kafkaPredictionDataProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProducerProp(opt)))
-
     val lrModel = spark.sparkContext.broadcast(LogisticRegressionModel.load(opt.dataDir+"mllib/lr/model"))
 
     val streamingContext = new StreamingContext(spark.sparkContext, Seconds(5))
@@ -56,7 +54,7 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
             kafkaPredictionResultProducer.value.send("prediction-result", sender, result)
             val data = row.getAs[String]("data")
             val speedData = s"""{"prediction":"$predResult","data":"$data"}""".stripMargin
-            kafkaPredictionDataProducer.value.send("prediction-data", UUID.randomUUID().toString, speedData)
+            kafkaPredictionResultProducer.value.send("prediction-data", UUID.randomUUID().toString, speedData)
           }))
         }
       )
