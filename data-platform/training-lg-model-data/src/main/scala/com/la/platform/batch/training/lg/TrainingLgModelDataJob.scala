@@ -25,7 +25,7 @@ object TrainingLgModelDataJob extends DataJobMain[CliParams] {
       .setRegParam(0.3)
       .setElasticNetParam(0.2)
 
-    val dataSet = loadDDRLibSVMFiles(s"$dataDir$LG_SVM_PATH_WILDCARD").map(item => LabeledPoint(item.label,item.features.asML)).toDF
+    val dataSet = loadDDRLibSVMFiles(s"$dataDir$LG_SVM_PATH_WILDCARD").map(item => LabeledPoint(item.label,item.features.asML)).toDF.cache
 
     val splits = dataSet.randomSplit(Array(0.8, 0.2))
 
@@ -33,12 +33,12 @@ object TrainingLgModelDataJob extends DataJobMain[CliParams] {
 
 
     val lrModel = lr.fit(trainingData)
-    lrModel.write.overwrite.save("/Users/zemo/projects/lambda_architecture/repo/laPlatform/resources/mllib/lr/model")
+    lrModel.write.overwrite.save(s"${opt.dataDir}lr/model")
     val predictionsEval = lrModel.evaluate(testData).predictions.cache
     predictionsEval.show()
-    val eval = predictionsEval.select("label", "prediction").map {case Row(label, prediction) => if (label == prediction) 1 else 0}
-//      .reduce(_+_)
-//    eval.foreach(println(_))
+    val eval = predictionsEval.select("label", "prediction")
+      .map{case Row(label, prediction) => if (label == prediction) 1 else 0}.cache
+    eval.show()
     println(eval.reduce(_+_))
   }
 
