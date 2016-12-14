@@ -28,7 +28,7 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
 
     val kafkaPredictionResultProducer = spark.sparkContext.broadcast(KafkaProducerWrapper(getKafkaProducerProp(opt)))
 
-    val lrModel = spark.sparkContext.broadcast(LogisticRegressionModel.load(opt.dataDir+"mllib/lr/model"))
+    val lrModel = spark.sparkContext.broadcast(LogisticRegressionModel.load(s"${opt.dataDir}mllib/lr/model"))
 
     val streamingContext = new StreamingContext(spark.sparkContext, Seconds(5))
 //    val streamingContext = new StreamingContext(spark.sparkContext, Milliseconds(200))
