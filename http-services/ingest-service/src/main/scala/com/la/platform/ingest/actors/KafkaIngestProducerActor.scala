@@ -3,6 +3,7 @@ package com.la.platform.ingest.actors
 import akka.actor.Props
 import akka.routing.FromConfig
 import com.la.platform.common.actors.kafka.producer.{AbstractKafkaProducerActor, ProducerFactory}
+import com.la.platform.common.settings.KafkaSettings
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData}
 import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
 import net.liftweb.json.Serialization.write
@@ -10,8 +11,8 @@ import net.liftweb.json.Serialization.write
 /**
   * Created by zemi on 25/10/2016.
   */
-class KafkaIngestProducerActor(producerFactory: ProducerFactory[Int, String])
-  extends AbstractKafkaProducerActor[IngestData, Int, String](producerFactory) {
+class KafkaIngestProducerActor(producerFactory: ProducerFactory[Int, String, KafkaSettings])
+  extends AbstractKafkaProducerActor[IngestData, Int, String, KafkaSettings](producerFactory) {
 
 
   /**
@@ -21,7 +22,7 @@ class KafkaIngestProducerActor(producerFactory: ProducerFactory[Int, String])
     */
   override def sendMsgToKafka(ingestData: IngestData): Unit = {
     log.info(s"${getClass.getCanonicalName} produceData() ->")
-    val now = java.time.LocalDateTime.now().format(settings.polish)
+    val now = java.time.LocalDateTime.now().format(producerFactory.settings.polish)
     val messageVal = write(KafkaIngestDataMessage(ingestData.value, ingestData.originator, now))
     log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
     val record = new ProducerRecord[Int, String](topic, ingestData.key, messageVal)

@@ -8,15 +8,13 @@ import org.apache.kafka.clients.producer.KafkaProducer
 /**
   * Created by zemi on 07/11/2016.
   */
-abstract class AbstractKafkaProducerActor[M, K, V](producerFactory: ProducerFactory[K, V]) extends Actor with ActorLogging {
+abstract class AbstractKafkaProducerActor[M, K, V, S <: KafkaSettings](producerFactory: ProducerFactory[K, V, S]) extends Actor with ActorLogging {
 
   implicit val formats = DefaultFormats
 
-  val settings = KafkaSettings(context.system.settings.config)
+  val topic = producerFactory.settings.topic
 
-  val topic = settings.topic
-
-  val producer = new KafkaProducer[Int, String](settings.getKafkaProducerProps)
+  val producer = new KafkaProducer[Int, String](producerFactory.settings.getKafkaProducerProps)
 
   override def receive: Receive = {
     case msg:M => sendMsgToKafka(msg)

@@ -2,23 +2,25 @@ package com.la.platform.predict.actors.kafka
 
 
 import akka.actor.Props
-import com.la.platform.common.actors.kafka.producer.{AbstractKafkaProducerActor, ProducerFactory}
+import com.la.platform.common.actors.kafka.producer.AbstractKafkaProducerActor
+import com.la.platform.common.settings.KafkaSettings
+import com.la.platform.predict.actors.ml.PredictServiceActor
 import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
 import net.liftweb.json.Serialization.write
 
 /**
   * Created by zemi on 03/11/2016.
   */
-class PredictKafkaProducerActor(producerFactory: ProducerFactory[Int, String])
-  extends AbstractKafkaProducerActor[PredictRequestMsg, Int, String](producerFactory) {
+class PredictKafkaProducerActor(producerFactory: PredictKafkaProducerFactory)
+  extends AbstractKafkaProducerActor[PredictServiceActor.PredictRequestMsg, Int, String, PredictKafkaSettings](producerFactory) {
 
   /**
     * Send prediction message to kafka cluster
     * @param msg - message to send
     */
-  def sendMsgToKafka(msg: PredictRequestMsg): Unit = {
+  def sendMsgToKafka(msg: PredictServiceActor.PredictRequestMsg): Unit = {
     val senderPath = sender().path.toString
-    val kafkaMsg = write(PredictionJsonMsg(msg.data, senderPath))
+    val kafkaMsg = write(PredictReloadModelJsonMsg(msg.data, senderPath))
     log.debug(s"${getClass.getCanonicalName} produceData() -> message: $kafkaMsg")
     val record = new ProducerRecord[Int, String](topic, 1, kafkaMsg)
     producer.send(record, new Callback {
@@ -32,7 +34,6 @@ class PredictKafkaProducerActor(producerFactory: ProducerFactory[Int, String])
     producer.flush()
     sender ! PredictRequestMsgSent
   }
-
 }
 
 object PredictKafkaProducerActor {

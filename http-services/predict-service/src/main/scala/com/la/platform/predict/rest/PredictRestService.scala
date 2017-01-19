@@ -8,8 +8,8 @@ import akka.http.scaladsl.server.Directives._
 import akka.pattern._
 import akka.util.Timeout
 import com.la.platform.common.rest.AbstractRestService
-import com.la.platform.predict.actors.PredictActor
-import com.la.platform.predict.actors.kafka.{PredictRequestMsg, PredictResponseMsg}
+import com.la.platform.predict.actors.PredictActionActor
+import com.la.platform.predict.actors.ml.PredictServiceActor
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -40,7 +40,7 @@ class PredictRestService(implicit system: ActorSystem) extends AbstractRestServi
     */
   def predict(predict: PredictRequest): Future[PredictResponse] = {
     getPredictActor.flatMap(predictAct => completeAndCleanUpAct({
-        (predictAct ? PredictRequestMsg(predict.data)).mapTo[PredictResponseMsg]
+        (predictAct ? PredictServiceActor.PredictRequestMsg(predict.data)).mapTo[PredictServiceActor.PredictResponseMsg]
           .map(responseMsg => PredictResponse(responseMsg.result))
       }, predictAct))
   }
@@ -52,7 +52,7 @@ class PredictRestService(implicit system: ActorSystem) extends AbstractRestServi
   def getPredictActor: Future[ActorRef] = {
     Future {
       val uid = UUID.randomUUID().toString
-      system.actorOf(PredictActor.props, s"PredictActor_$uid")
+      system.actorOf(PredictActionActor.props, s"PredictActor_$uid")
     }
   }
 }

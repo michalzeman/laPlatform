@@ -5,6 +5,7 @@ name := "http-services"
 val akkaV = "2.4.8"
 val kafkaV = "0.10.0.1"
 val scalaTestV = "2.2.6"
+val sparkV = "2.0.0"
 
 lazy val commonSettings = Seq(
   organization := "com.la.platform.http",
@@ -24,7 +25,7 @@ lazy val commonSettings = Seq(
     "com.typesafe.akka" %% "akka-testkit" % akkaV % "test",
     "org.mockito" % "mockito-all" % "1.10.19" % "test",
     "org.scalamock" %% "scalamock-scalatest-support" % "3.2.2" % "test",
-    "org.scalatest" % "scalatest_2.11" % "3.0.0" % "test",
+    "org.scalatest" %%"scalatest" % "3.0.0" % "test",
     //DB dependencies
     "org.postgresql" % "postgresql" % "9.4-1203-jdbc42",
     "com.zaxxer" % "HikariCP" % "2.4.1",
@@ -56,6 +57,16 @@ lazy val commonSettings = Seq(
   }
 )
 
+lazy val apacheSparkSettings = Seq(
+  libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-core" % sparkV,
+    "org.apache.spark" %% "spark-sql" % sparkV,
+    "org.apache.spark" %% "spark-streaming" % sparkV,
+    "org.apache.spark" %% "spark-mllib" % sparkV,
+    "org.apache.spark" %% "spark-streaming" % sparkV,
+    "org.apache.hadoop" % "hadoop-client" % "2.7.3")
+)
+
 lazy val commonApi = (project in file("common-api"))
   .settings(commonSettings: _*)
 
@@ -70,6 +81,7 @@ lazy val predictServiceSettings = Seq(
 
 lazy val predictService = (project in file("predict-service"))
   .settings(commonSettings: _*)
+  .settings(apacheSparkSettings: _*)
   .settings(predictServiceSettings: _*)
   .dependsOn(classpathDependency(commonApi))
 

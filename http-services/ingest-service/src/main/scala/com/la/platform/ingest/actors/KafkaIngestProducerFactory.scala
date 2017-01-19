@@ -9,13 +9,8 @@ import com.typesafe.config.Config
 /**
   * Created by zemi on 07/11/2016.
   */
-class KafkaIngestProducerFactory(config: Config) extends ProducerFactory[Int, String] {
-
-  val settings = KafkaSettings(config)
-
-  override def getSetting: Properties = settings.getKafkaProducerProps()
-
-  override def getTopic: String = settings.topic
+class KafkaIngestProducerFactory(config: Config) extends ProducerFactory[Int, String, KafkaSettings] {
+  override protected def getSettings: KafkaSettings = KafkaSettings(config)
 }
 
 object KafkaIngestProducerFactory {
