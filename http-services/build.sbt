@@ -2,7 +2,7 @@
 
 name := "http-services"
 
-val akkaV = "2.4.8"
+val akkaV = "2.4.11"
 val kafkaV = "0.10.0.1"
 val scalaTestV = "2.2.6"
 val sparkV = "2.0.0"
@@ -67,7 +67,7 @@ lazy val apacheSparkSettings = Seq(
     "org.apache.hadoop" % "hadoop-client" % "2.7.3")
 )
 
-lazy val commonApi = (project in file("common-api"))
+lazy val `common-api` = (project in file("common-api"))
   .settings(commonSettings: _*)
 
 lazy val ingestServiceSettings = Seq(
@@ -79,25 +79,25 @@ lazy val predictServiceSettings = Seq(
   libraryDependencies ++= Seq("com.typesafe.akka" %% "akka-stream-kafka" % "0.13")
 )
 
-lazy val predictService = (project in file("predict-service"))
+lazy val `predict-service` = (project in file("predict-service"))
   .settings(commonSettings: _*)
   .settings(apacheSparkSettings: _*)
   .settings(predictServiceSettings: _*)
-  .dependsOn(classpathDependency(commonApi))
+  .dependsOn(classpathDependency(`common-api`))
 
-lazy val ingestService = (project in file("ingest-service"))
+lazy val `ingest-service` = (project in file("ingest-service"))
   .settings(commonSettings: _*)
   .settings(ingestServiceSettings: _*)
-  .dependsOn(classpathDependency(commonApi))
+  .dependsOn(classpathDependency(`common-api`))
 
 lazy val `speed-service` = (project in file("speed-service"))
   .settings(commonSettings: _*)
   .settings(predictServiceSettings: _*)
-  .dependsOn(classpathDependency(commonApi))
+  .dependsOn(classpathDependency(`common-api`))
 
-lazy val httpServices =
+lazy val `http-services` =
   project.in(file("."))
-    .aggregate(predictService, ingestService, `speed-service`)
+    .aggregate(`predict-service`, `ingest-service`, `speed-service`)
 
 
 

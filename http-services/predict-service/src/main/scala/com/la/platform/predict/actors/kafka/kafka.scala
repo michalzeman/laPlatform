@@ -5,11 +5,7 @@ package com.la.platform.predict.actors
   */
 package object kafka {
 
-//  case class PredictResponseMsg(result: String)
-
   case class PredictReloadModelJsonMsg(data: String, sender: String)
-
-//  case class PredictRequestMsg(data: String)
 
   case object PredictRequestMsgSent
 

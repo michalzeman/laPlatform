@@ -18,7 +18,7 @@ import org.apache.kafka.common.serialization.StringDeserializer
   */
 class SpeedDataRestService(implicit system: ActorSystem) extends AbstractRestService {
 
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
 //  val producerRef = system.actorOf(Props[SourcePublisherActor])
 //
@@ -29,7 +29,7 @@ class SpeedDataRestService(implicit system: ActorSystem) extends AbstractRestSer
     .withGroupId("PredictSpeedData")
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
 
-  val source = Consumer.committableSource(consumerSettings, Subscriptions.topics("prediction-data"))
+  val source = Consumer.committableSource(consumerSettings, Subscriptions.topics("PredictionResult"))
     .map(msg => msg.record.value())
 
 

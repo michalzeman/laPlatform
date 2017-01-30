@@ -7,6 +7,7 @@ import akka.pattern._
 import com.la.platform.common.rest.AbstractRestService
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData => ProduceData}
 import com.la.platform.ingest.actors.KafkaIngestProducerActorSelection
+import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.Future
 
@@ -14,6 +15,8 @@ import scala.concurrent.Future
   * Created by zemi on 25/10/2016.
   */
 class IngestRestService(implicit system: ActorSystem) extends AbstractRestService with KafkaIngestProducerActorSelection {
+
+//  import IngestRestService._
 
   override def buildRoute(): Route =
     path("ingest") {

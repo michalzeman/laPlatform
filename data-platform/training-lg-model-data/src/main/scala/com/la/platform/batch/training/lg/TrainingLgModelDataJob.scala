@@ -42,7 +42,7 @@ object TrainingLgModelDataJob extends DataJobMain[TrainingLgModelDataParams] {
     val predictionsEval = lrModel.evaluate(testData).predictions.cache
     //notify all services using ML model that there is new version of model
     val reloadModelMsg =s"""{"data":"New Logistic regression model is available. Path: ${opt.dataDir}lr/model","sender":"${appName}"}""".stripMargin
-    kafkaPredictionResultProducer.value.send("prediction-result", UUID.randomUUID().toString, reloadModelMsg)
+    kafkaPredictionResultProducer.value.send("PredictReloadModel", UUID.randomUUID().toString, reloadModelMsg)
 
     predictionsEval.show()
     val eval = predictionsEval.select("label", "prediction")

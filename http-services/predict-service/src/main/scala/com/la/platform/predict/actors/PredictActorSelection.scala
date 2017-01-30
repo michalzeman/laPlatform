@@ -1,7 +1,7 @@
 package com.la.platform.predict.actors
 
 import akka.actor.{ActorRefFactory, ActorSelection}
-import com.la.platform.predict.actors.kafka.{PredictKafkaProducerActor, PredictReloadModelKafkaConsumerActor}
+import com.la.platform.predict.actors.kafka.{PredictionResultKafkaProducerActor, PredictReloadModelKafkaConsumerActor}
 import com.la.platform.predict.actors.ml.PredictServiceActor
 import com.la.platform.predict.actors.supervisors.{PredictKafkaSupervisorActor, PredictSupervisorActor}
 
@@ -10,25 +10,25 @@ import com.la.platform.predict.actors.supervisors.{PredictKafkaSupervisorActor, 
   */
 trait PredictActorSelection {
 
-  val predictKafkaProducerActorPath = PredictKafkaSupervisorActor.getActorPath+"/"+PredictKafkaProducerActor.actor_name
+  val predictionResultKafkaProducerActorPath:String = PredictKafkaSupervisorActor.getActorPath+"/"+PredictionResultKafkaProducerActor.actor_name
 
-  val predictResultKafkaConsumerActorPath = PredictKafkaSupervisorActor.getActorPath+"/"+PredictReloadModelKafkaConsumerActor.actor_name
+  val predictReloadModelKafkaConsumerActorPath:String = PredictKafkaSupervisorActor.getActorPath+"/"+PredictReloadModelKafkaConsumerActor.actor_name
 
-  val predictPredictServiceActorPath = PredictSupervisorActor.getActorPath+"/"+PredictServiceActor.actor_name
+  val predictPredictServiceActorPath:String = PredictSupervisorActor.getActorPath+"/"+PredictServiceActor.actor_name
 
   /**
-    * find and return PredictKafkaProducerActor selection
+    * find and return PredictionResultKafkaProducerActor selection
     * @param context
     * @return ActorSelection
     */
-  def selectPredictKafkaProducerActor(implicit context: ActorRefFactory): ActorSelection = context.actorSelection(predictKafkaProducerActorPath)
+  def selectPredictionResultKafkaProducerActor(implicit context: ActorRefFactory): ActorSelection = context.actorSelection(predictionResultKafkaProducerActorPath)
 
   /**
-    * find and return PredictResultKafkaConsumerActor selection
+    * find and return PredictReloadModelKafkaConsumerActor selection
     * @param context
     * @return ActorSelection
     */
-  def selectPredictResultKafkaConsumerActor(implicit context: ActorRefFactory): ActorSelection = context.actorSelection(predictResultKafkaConsumerActorPath)
+  def selectPredictReloadModelKafkaConsumerActor(implicit context: ActorRefFactory): ActorSelection = context.actorSelection(predictReloadModelKafkaConsumerActorPath)
 
   /**
     * find and return PredictServiceActor selection

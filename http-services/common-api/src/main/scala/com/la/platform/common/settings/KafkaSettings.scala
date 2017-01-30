@@ -28,6 +28,7 @@ class KafkaSettings(config: Config) {
     props.put("client.id", client_id+UUID.randomUUID().toString)
     props.put("key.serializer", key_serializer)
     props.put("value.serializer", value_serializer)
+    props.put("producer.type","async")
     props
   }
 

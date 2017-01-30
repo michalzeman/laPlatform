@@ -32,7 +32,7 @@ class PredictReloadModelKafkaConsumerActor extends Actor with ActorLogging with 
     .withGroupId("PredictData")
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
 
-  val sourceStream = Consumer.committableSource(consumerSettings, Subscriptions.topics("predict-reload-model"))
+  val sourceStream = Consumer.committableSource(consumerSettings, Subscriptions.topics("PredictReloadModel"))
   sourceStream.mapAsync(1) { msg =>
       val msgVal = msg.record.value()
       log.debug(s"Kafka consumer topic: predict-reload-model, message: $msgVal")

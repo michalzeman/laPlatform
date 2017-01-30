@@ -20,12 +20,12 @@ class PredictKafkaProducerActorTest extends TestKit(ActorSystem("predict-http-se
   with ImplicitSender
   with MockitoSugar {
 
-  val producerFactory = mock[PredictKafkaProducerFactory]
+  val producerFactory = mock[PredictionResultKafkaProducerFactory]
 
   test("send msg to kafka producer") {
     val producer = mock[KafkaProducer[Int, String]]
     when(producerFactory.getProducer).thenReturn(producer)
-    val predictKafkaProducerActor = system.actorOf(Props(classOf[PredictKafkaProducerActor], producerFactory))
+    val predictKafkaProducerActor = system.actorOf(Props(classOf[PredictionResultKafkaProducerActor], producerFactory))
     predictKafkaProducerActor ! PredictServiceActor.PredictRequestMsg("test data")
     expectMsg(PredictRequestMsgSent)
   }

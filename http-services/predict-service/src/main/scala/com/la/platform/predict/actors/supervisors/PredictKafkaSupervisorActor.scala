@@ -1,22 +1,25 @@
 package com.la.platform.predict.actors.supervisors
 
-import akka.actor.Props
+import akka.actor.{ActorRef, Props}
 import com.la.platform.common.actors.kafka.KafkaSupervisorActor
-import com.la.platform.predict.actors.kafka.{PredictKafkaProducerActor, PredictKafkaProducerFactory, PredictReloadModelKafkaConsumerActor$}
+import com.la.platform.predict.actors.kafka.{PredictReloadModelKafkaConsumerActor, PredictionResultKafkaProducerActor, PredictionResultKafkaProducerFactory}
 
 /**
   * Created by zemi on 03/11/2016.
   */
 class PredictKafkaSupervisorActor extends KafkaSupervisorActor {
 
-//  val predictKafkaProducer = context.actorOf(PredictKafkaProducerActor.props(PredictKafkaProducerFactory(context.system.settings.config)),
-//    PredictKafkaProducerActor.actor_name)
-//
-//  context.watch(predictKafkaProducer)
-//
-//  val predictResultKafkaConsumer = context.actorOf(PredictResultKafkaConsumerActor.props, PredictResultKafkaConsumerActor.actor_name)
-//
-//  context.watch(predictResultKafkaConsumer)
+  val predictionResultKafkaProducer: ActorRef = context.actorOf(PredictionResultKafkaProducerActor
+    .props(
+      PredictionResultKafkaProducerFactory(context.system.settings.config)),
+    PredictionResultKafkaProducerActor.actor_name)
+
+  context.watch(predictionResultKafkaProducer)
+
+  val predictReloadModelKafkaConsumerActor: ActorRef = context.actorOf(PredictReloadModelKafkaConsumerActor.props,
+    PredictReloadModelKafkaConsumerActor.actor_name)
+
+  context.watch(predictReloadModelKafkaConsumerActor)
 
 }
 

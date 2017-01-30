@@ -5,8 +5,11 @@ import akka.routing.FromConfig
 import com.la.platform.common.actors.kafka.producer.{AbstractKafkaProducerActor, ProducerFactory}
 import com.la.platform.common.settings.KafkaSettings
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData}
-import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
 import net.liftweb.json.Serialization.write
+import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
+//import scala.concurrent.duration._
+//
+//import scala.concurrent.Future
 
 /**
   * Created by zemi on 25/10/2016.
@@ -14,7 +17,9 @@ import net.liftweb.json.Serialization.write
 class KafkaIngestProducerActor(producerFactory: ProducerFactory[Int, String, KafkaSettings])
   extends AbstractKafkaProducerActor[IngestData, Int, String, KafkaSettings](producerFactory) {
 
+  //  protected implicit val timeout: Timeout = 5000 milliseconds
 
+  //  protected implicit val executorService = scala.concurrent.ExecutionContext.Implicits.global
   /**
     * Produce event into the kafka
     *
@@ -26,6 +31,7 @@ class KafkaIngestProducerActor(producerFactory: ProducerFactory[Int, String, Kaf
     val messageVal = write(KafkaIngestDataMessage(ingestData.value, ingestData.originator, now))
     log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
     val record = new ProducerRecord[Int, String](topic, ingestData.key, messageVal)
+    //    Future {
     producer.send(record, new Callback {
       override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
         log.debug("produceData() -> finished")
@@ -35,6 +41,7 @@ class KafkaIngestProducerActor(producerFactory: ProducerFactory[Int, String, Kaf
       }
     })
     producer.flush()
+    //    }
     sender ! DataIngested(messageVal)
   }
 
@@ -44,7 +51,7 @@ object KafkaIngestProducerActor {
 
   case class IngestData(key: Int, value: String, originator: Option[String])
 
-  case class DataIngested(value: String);
+  case class DataIngested(value: String)
 
   val ACTOR_NAME = "kafkaIngestProducer"
 

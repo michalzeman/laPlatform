@@ -11,16 +11,15 @@ import net.liftweb.json.Serialization.write
 /**
   * Created by zemi on 03/11/2016.
   */
-class PredictKafkaProducerActor(producerFactory: PredictKafkaProducerFactory)
-  extends AbstractKafkaProducerActor[PredictServiceActor.PredictRequestMsg, Int, String, PredictKafkaSettings](producerFactory) {
+class PredictionResultKafkaProducerActor(producerFactory: PredictionResultKafkaProducerFactory)
+  extends AbstractKafkaProducerActor[PredictServiceActor.PredictionResult, Int, String, PredictionResultKafkaSettings](producerFactory) {
 
   /**
     * Send prediction message to kafka cluster
     * @param msg - message to send
     */
-  def sendMsgToKafka(msg: PredictServiceActor.PredictRequestMsg): Unit = {
-    val senderPath = sender().path.toString
-    val kafkaMsg = write(PredictReloadModelJsonMsg(msg.data, senderPath))
+  def sendMsgToKafka(msg: PredictServiceActor.PredictionResult): Unit = {
+    val kafkaMsg = write(msg)
     log.debug(s"${getClass.getCanonicalName} produceData() -> message: $kafkaMsg")
     val record = new ProducerRecord[Int, String](topic, 1, kafkaMsg)
     producer.send(record, new Callback {
@@ -36,9 +35,9 @@ class PredictKafkaProducerActor(producerFactory: PredictKafkaProducerFactory)
   }
 }
 
-object PredictKafkaProducerActor {
+object PredictionResultKafkaProducerActor {
 
-  val actor_name = "PredictKafkaProducer"
+  val actor_name = "PredictionResultKafkaProducer"
 
-  def props(producerFactory: PredictKafkaProducerFactory): Props = Props(classOf[PredictKafkaProducerActor], producerFactory)
+  def props(producerFactory: PredictionResultKafkaProducerFactory): Props = Props(classOf[PredictionResultKafkaProducerActor], producerFactory)
 }

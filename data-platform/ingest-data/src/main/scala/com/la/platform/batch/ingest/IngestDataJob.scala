@@ -28,7 +28,7 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
 
     val kafkaParams = consumerParams(opt)
 
-    val topics = Array("ingest-data")
+    val topics = Array("IngestData")
     val stream = KafkaUtils.createDirectStream[String, String](
       streamingContext,
       PreferConsistent,

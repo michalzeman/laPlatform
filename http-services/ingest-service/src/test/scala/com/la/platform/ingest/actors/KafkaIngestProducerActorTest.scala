@@ -3,6 +3,7 @@ package com.la.platform.ingest.actors
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import com.la.platform.common.actors.kafka.producer.ProducerFactory
+import com.la.platform.common.settings.KafkaSettings
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData}
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.scalatest.mockito.MockitoSugar
@@ -19,7 +20,7 @@ class KafkaIngestProducerActorTest extends TestKit(ActorSystem("ingest-data-http
   with ImplicitSender
   with MockitoSugar {
 
-  val producerFactory = mock[ProducerFactory[Int, String]]
+  val producerFactory = mock[ProducerFactory[Int, String, KafkaSettings]]
 
 //  test("send msg to kafka producer") {
 //    val producer = mock[KafkaProducer[Int, String]]
