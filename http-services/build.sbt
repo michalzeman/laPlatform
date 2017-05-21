@@ -2,10 +2,12 @@
 
 name := "http-services"
 
-val akkaV = "2.4.11"
+val akkaV = "2.5.1"
+val akkaHttpV = "10.0.6"
 val kafkaV = "0.10.0.1"
 val scalaTestV = "2.2.6"
 val sparkV = "2.0.0"
+val akkaStreamKafkaV = "0.13"
 
 lazy val commonSettings = Seq(
   organization := "com.la.platform.http",
@@ -14,10 +16,10 @@ lazy val commonSettings = Seq(
   scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),
   libraryDependencies ++= Seq(
     "com.typesafe" % "config" % "1.3.0",
-    "com.typesafe.akka" %% "akka-http-core" % akkaV,
+    "com.typesafe.akka" %% "akka-http-core" % akkaHttpV,
     "com.typesafe.akka" %% "akka-stream" % akkaV,
-    "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaV,
-    "com.typesafe.akka" % "akka-http-testkit-experimental_2.11" % "2.4.2-RC3",
+    "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
+    "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV,
     "com.google.inject" % "guice" % "4.1.0",
     "com.typesafe.akka" %% "akka-actor" % akkaV,
     "ch.qos.logback" % "logback-classic" % "1.1.3",
@@ -31,7 +33,11 @@ lazy val commonSettings = Seq(
     "com.zaxxer" % "HikariCP" % "2.4.1",
     "org.apache.kafka" %% "kafka" % kafkaV,
     "org.apache.kafka" % "kafka-clients" % kafkaV,
-    "net.liftweb" % "lift-json_2.11" % "2.6.3"
+    "net.liftweb" % "lift-json_2.11" % "2.6.3",
+    // https://mvnrepository.com/artifact/org.reactivestreams/reactive-streams
+    "org.reactivestreams" % "reactive-streams" % "1.0.0",
+    "io.reactivex" % "rxjava-reactive-streams" % "1.2.1",
+    "io.reactivex" % "rxjava" % "1.2.2"
   ),
   assemblyMergeStrategy in assembly := {
     case PathList("com", "la", "platform", xs@_*) => MergeStrategy.last
@@ -72,11 +78,12 @@ lazy val `common-api` = (project in file("common-api"))
 
 lazy val ingestServiceSettings = Seq(
   name := "ingest-service",
+  libraryDependencies ++= Seq("com.typesafe.akka" %% "akka-stream-kafka" % akkaStreamKafkaV),
   mainClass in assembly := Some("com.la.platform.ingest.IngestMain")
 )
 
 lazy val predictServiceSettings = Seq(
-  libraryDependencies ++= Seq("com.typesafe.akka" %% "akka-stream-kafka" % "0.13")
+  libraryDependencies ++= Seq("com.typesafe.akka" %% "akka-stream-kafka" % akkaStreamKafkaV)
 )
 
 lazy val `predict-service` = (project in file("predict-service"))

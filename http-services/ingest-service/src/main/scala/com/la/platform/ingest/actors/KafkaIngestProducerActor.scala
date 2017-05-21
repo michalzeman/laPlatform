@@ -1,48 +1,61 @@
 package com.la.platform.ingest.actors
 
-import akka.actor.Props
+import akka.NotUsed
+import akka.actor.{Actor, ActorLogging, Props}
+import akka.kafka.{ProducerMessage, ProducerSettings}
+import akka.kafka.scaladsl.Producer
 import akka.routing.FromConfig
-import com.la.platform.common.actors.kafka.producer.{AbstractKafkaProducerActor, ProducerFactory}
-import com.la.platform.common.settings.KafkaSettings
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.{Sink, Source}
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData}
+import net.liftweb.json.DefaultFormats
 import net.liftweb.json.Serialization.write
-import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
-//import scala.concurrent.duration._
-//
-//import scala.concurrent.Future
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.{ByteArraySerializer, IntegerSerializer, StringSerializer}
+import org.reactivestreams.Publisher
+import rx.{Observable, RxReactiveStreams}
+import rx.subjects.PublishSubject
 
 /**
   * Created by zemi on 25/10/2016.
   */
-class KafkaIngestProducerActor(producerFactory: ProducerFactory[Int, String, KafkaSettings])
-  extends AbstractKafkaProducerActor[IngestData, Int, String, KafkaSettings](producerFactory) {
+class KafkaIngestProducerActor extends Actor with ActorLogging {
 
-  //  protected implicit val timeout: Timeout = 5000 milliseconds
+  implicit val formats = DefaultFormats
 
-  //  protected implicit val executorService = scala.concurrent.ExecutionContext.Implicits.global
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+
+  val producerSettings = ProducerSettings(context.system, new IntegerSerializer, new StringSerializer)
+    .withBootstrapServers("localhost:9092")
+
+  val kafkaProducer = producerSettings.createKafkaProducer()
+
+  val subject = PublishSubject.create[IngestData]()
+
+  val producerSource = Source.fromPublisher(publisher).map(element => {
+    val now = java.time.LocalDateTime.now().toString
+    val messageVal = write(KafkaIngestDataMessage(element.value, element.originator, now))
+    log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
+    new ProducerRecord[Integer, String]("IngestData", element.key, messageVal)
+  }).runWith(Producer.plainSink(producerSettings, kafkaProducer))
+
+  def publisher: Publisher[IngestData] = {
+    RxReactiveStreams.toPublisher[IngestData](subject)
+  }
+
+  override def receive: Receive = {
+    case msg:IngestData => sendMsgToKafka(msg)
+    case _ => log.warning("problem !!!!!!!")
+  }
   /**
     * Produce event into the kafka
     *
     * @param ingestData
     */
-  override def sendMsgToKafka(ingestData: IngestData): Unit = {
+  def sendMsgToKafka(ingestData: IngestData): Unit = {
     log.info(s"${getClass.getCanonicalName} produceData() ->")
-    val now = java.time.LocalDateTime.now().format(producerFactory.settings.polish)
-    val messageVal = write(KafkaIngestDataMessage(ingestData.value, ingestData.originator, now))
-    log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
-    val record = new ProducerRecord[Int, String](topic, ingestData.key, messageVal)
-    //    Future {
-    producer.send(record, new Callback {
-      override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
-        log.debug("produceData() -> finished")
-        if (exception != null) {
-          log.error(exception.getMessage, exception)
-        }
-      }
-    })
-    producer.flush()
-    //    }
-    sender ! DataIngested(messageVal)
+    subject.onNext(ingestData)
+    sender ! DataIngested("OK")
   }
 
 }
@@ -56,5 +69,5 @@ object KafkaIngestProducerActor {
   val ACTOR_NAME = "kafkaIngestProducer"
 
   //  def props: Props = Props[KafkaIngestProducerActor]
-  def props(producerFactory: KafkaIngestProducerFactory): Props = FromConfig.props(Props(classOf[KafkaIngestProducerActor], producerFactory))
+  def props(): Props = FromConfig.props(Props(classOf[KafkaIngestProducerActor]))
 }

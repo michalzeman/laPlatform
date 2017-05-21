@@ -20,10 +20,6 @@ class SpeedDataRestService(implicit system: ActorSystem) extends AbstractRestSer
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-//  val producerRef = system.actorOf(Props[SourcePublisherActor])
-//
-//  val publisher = ActorPublisher[String](producerRef)
-
   val consumerSettings = ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
     .withBootstrapServers("localhost:9092")
     .withGroupId("PredictSpeedData")
@@ -38,7 +34,6 @@ class SpeedDataRestService(implicit system: ActorSystem) extends AbstractRestSer
     handleWebSocketMessages(speedData)
   }
 
-  def speedData: Flow[Any, Strict, Any] = Flow.fromSinkAndSource(Sink.ignore, source map { data => {
-    TextMessage.Strict(data)
-  }})
+  def speedData: Flow[Any, Strict, Any] = Flow.fromSinkAndSource(Sink.ignore,
+    source.map(data => TextMessage.Strict(data)))
 }

@@ -39,13 +39,13 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
       .map(record => record.value)
       .foreachRDD(
         rdd => {
-          val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
           rdd.map(strVal => {
             val scMap = SparkContext.getOrCreate()
             scMap.parallelize(Seq(strVal))
           }).foreach(rddFiltered =>
-            rddFiltered.saveAsTextFile(workingDirectory + s"${INGEST_DATA_PREFIX_PATH}${java.util.UUID.randomUUID.toString}-${System.currentTimeMillis}")
+            rddFiltered.saveAsTextFile(workingDirectory + s"$INGEST_DATA_PREFIX_PATH${java.util.UUID.randomUUID.toString}-${System.currentTimeMillis}")
           )
+          val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
           val json = spark.read.json(rdd)
           json.show()
         })

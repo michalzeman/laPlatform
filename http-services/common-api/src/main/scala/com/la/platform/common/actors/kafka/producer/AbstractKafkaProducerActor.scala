@@ -5,6 +5,8 @@ import com.la.platform.common.settings.KafkaSettings
 import net.liftweb.json.DefaultFormats
 import org.apache.kafka.clients.producer.KafkaProducer
 
+import scala.util.Try
+
 /**
   * Created by zemi on 07/11/2016.
   */
@@ -23,9 +25,8 @@ abstract class AbstractKafkaProducerActor[M, K, V, S <: KafkaSettings](producerF
 
   def sendMsgToKafka(msg: M): Unit
 
-  @scala.throws[Exception](classOf[Exception])
   override def postStop(): Unit = {
-    producer.close()
+    Try(producer.close())
     super.postStop()
   }
 }
