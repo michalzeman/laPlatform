@@ -25,10 +25,12 @@ class PredictReloadModelKafkaConsumerActor extends Actor with ActorLogging with 
 
   implicit val materializer = ActorMaterializer()
 
+  val bootstrap_servers = context.system.settings.config.getString("kafka.producer.bootstrap.servers")
+
   implicit val formats = DefaultFormats
 
   val consumerSettings = ConsumerSettings(context.system, new StringDeserializer, new StringDeserializer)
-    .withBootstrapServers("localhost:9092")
+    .withBootstrapServers(bootstrap_servers)
     .withGroupId("PredictData")
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
 

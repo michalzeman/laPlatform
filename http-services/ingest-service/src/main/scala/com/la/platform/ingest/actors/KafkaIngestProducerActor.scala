@@ -25,8 +25,10 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
+  val bootstrap_servers = context.system.settings.config.getString("kafka.producer.bootstrap.servers")
+
   val producerSettings = ProducerSettings(context.system, new IntegerSerializer, new StringSerializer)
-    .withBootstrapServers("localhost:9092")
+    .withBootstrapServers(bootstrap_servers)
 
   val kafkaProducer = producerSettings.createKafkaProducer()
 

@@ -20,8 +20,10 @@ class SpeedDataRestService(implicit system: ActorSystem) extends AbstractRestSer
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
+  val bootstrap_servers = system.settings.config.getString("kafka.producer.bootstrap.servers")
+
   val consumerSettings = ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
-    .withBootstrapServers("localhost:9092")
+    .withBootstrapServers(bootstrap_servers)
     .withGroupId("PredictSpeedData")
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
 
