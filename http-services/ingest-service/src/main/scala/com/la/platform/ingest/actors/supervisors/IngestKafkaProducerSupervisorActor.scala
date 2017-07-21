@@ -1,19 +1,20 @@
 package com.la.platform.ingest.actors.supervisors
 
-import akka.actor.Props
+import akka.actor.{ActorRef, Props}
 import com.la.platform.common.actors.kafka.KafkaSupervisorActor
 import com.la.platform.ingest.actors.KafkaIngestProducerActor
+import com.la.platform.ingest.actors.KafkaIngestProducerActor.IngestData
+import com.la.platform.ingest.bus.IngestEventBusExtension
 
 /**
   * Created by zemi on 26/10/2016.
   */
 class IngestKafkaProducerSupervisorActor extends KafkaSupervisorActor {
 
-  val kafkaIngestProducerActor = context.actorOf(KafkaIngestProducerActor.props,
+  val kafkaIngestProducerActor: ActorRef = context.actorOf(KafkaIngestProducerActor.props,
     KafkaIngestProducerActor.ACTOR_NAME)
 
   context.watch(kafkaIngestProducerActor)
-
 }
 
 object IngestKafkaProducerSupervisorActor {
@@ -22,5 +23,5 @@ object IngestKafkaProducerSupervisorActor {
 
   def getActorPath:String = "/user/"+ACTOR_NAME
 
-  def props: Props = Props[IngestKafkaProducerSupervisorActor]
+  def props: Props = Props(new IngestKafkaProducerSupervisorActor)
 }

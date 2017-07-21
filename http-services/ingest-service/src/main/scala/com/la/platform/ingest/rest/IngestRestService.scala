@@ -1,22 +1,20 @@
 package com.la.platform.ingest.rest
 
+import java.util.UUID
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.pattern._
 import com.la.platform.common.rest.AbstractRestService
-import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData => ProduceData}
-import com.la.platform.ingest.actors.KafkaIngestProducerActorSelection
-import spray.json.DefaultJsonProtocol._
-
-import scala.concurrent.Future
+import com.la.platform.ingest.bus.{IngestEventBus, IngestEventBusExtension}
+import com.la.platform.ingest.actors.KafkaIngestProducerActor.IngestData
 
 /**
   * Created by zemi on 25/10/2016.
   */
-class IngestRestService(implicit system: ActorSystem) extends AbstractRestService with KafkaIngestProducerActorSelection {
+class IngestRestService(implicit val system: ActorSystem) extends AbstractRestService {
 
-//  import IngestRestService._
+  val ingestEventBus: IngestEventBus = IngestEventBusExtension(system).eventBus
 
   override def buildRoute(): Route =
     path("ingest") {
@@ -28,10 +26,10 @@ class IngestRestService(implicit system: ActorSystem) extends AbstractRestServic
         }
     }
 
-  def ingestData(ingestData: Ingest): Future[String] = {
-    completeAndCleanUpAct({
-      (select ? ProduceData(1, ingestData.data, ingestData.originator)).mapTo[DataIngested].map(response => "OK")
-    })
+  def ingestData(ingestData: Ingest): String = {
+    system.eventStream
+    ingestEventBus.publish(IngestData(UUID.randomUUID(), ingestData.data, ingestData.originator))
+    "OK"
   }
 
 }

@@ -12,11 +12,13 @@ object IngestServiceMain extends AbstractMain {
 
   val ingestKafkaProducerSupervisor = system.actorOf(IngestKafkaProducerSupervisorActor.props, IngestKafkaProducerSupervisorActor.ACTOR_NAME)
 
+  val restServices = List(new IngestRestService)
+
   /**
     * Init rest endpoints
     *
     * @return
     */
-  override def initRestEndpoints: List[RestEndpointRoute] = List(new IngestRestService)
+  override def initRestEndpoints: List[RestEndpointRoute] = restServices
 
 }

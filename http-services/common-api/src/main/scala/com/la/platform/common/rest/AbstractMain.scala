@@ -30,8 +30,6 @@ trait AbstractMain extends App {
 
   lazy val settings = Settings(system.settings.config)
 
-  private val restEndpoints = initRestEndpoints
-
   val routes = logRequestResult("", InfoLevel)(buildRoutes())
 
   val bindingFuture: Future[ServerBinding] = Http().bindAndHandle(routes, settings.Http.interface, settings.Http.port)
@@ -56,7 +54,7 @@ trait AbstractMain extends App {
         case Nil => route
       }
     }
-    chainRoutes(restEndpoints, healthRoutes)
+    chainRoutes(initRestEndpoints, healthRoutes)
   }
 
   /**
