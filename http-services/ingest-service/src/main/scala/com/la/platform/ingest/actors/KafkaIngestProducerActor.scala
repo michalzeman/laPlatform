@@ -11,13 +11,12 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData}
 import com.la.platform.ingest.bus.IngestEventBusExtension
+import io.reactivex.processors.PublishProcessor
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.Serialization.write
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{IntegerSerializer, StringSerializer}
 import org.reactivestreams.Publisher
-import rx.RxReactiveStreams
-import rx.subjects.PublishSubject
 
 import scala.concurrent.Future
 
@@ -37,9 +36,11 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
 
   val kafkaProducer: KafkaProducer[Integer, String] = producerSettings.createKafkaProducer()
 
-  val subject: PublishSubject[IngestData] = PublishSubject.create[IngestData]()
+  val publisher: PublishProcessor[IngestData] = PublishProcessor.create[IngestData]()
 
-  val producerSource: Future[Done] = Source.fromPublisher(publisher).map(mapMsg).runWith(Producer.plainSink(producerSettings, kafkaProducer))
+  val producerSource: Future[Done] = Source.fromPublisher(publisher)
+    .map(mapMsg)
+    .runWith(Producer.plainSink(producerSettings, kafkaProducer))
 
 
   private def mapMsg(element: IngestData): ProducerRecord[Integer, String] = {
@@ -47,10 +48,6 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
     val messageVal = write(KafkaIngestDataMessage(element.value, element.originator, now))
     log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
     new ProducerRecord[Integer, String]("IngestData", 1, messageVal)
-  }
-
-  def publisher: Publisher[IngestData] = {
-    RxReactiveStreams.toPublisher[IngestData](subject)
   }
 
   override def receive: Receive = {
@@ -64,7 +61,7 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
     */
   def sendMsgToKafka(ingestData: IngestData): Unit = {
     log.info(s"${getClass.getCanonicalName} produceData() ->")
-    subject.onNext(ingestData)
+    publisher.onNext(ingestData)
     sender ! DataIngested("OK")
   }
 

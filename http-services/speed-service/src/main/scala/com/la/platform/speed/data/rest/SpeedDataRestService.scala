@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ws.TextMessage
 import akka.http.scaladsl.model.ws.TextMessage.Strict
 import akka.http.scaladsl.server.Route
-import akka.stream.scaladsl.{Flow, Sink}
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.la.platform.common.rest.AbstractRestService
 import akka.http.scaladsl.server.Directives._
 import akka.kafka.{ConsumerSettings, Subscriptions}
@@ -20,14 +20,14 @@ class SpeedDataRestService(implicit system: ActorSystem) extends AbstractRestSer
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  val bootstrap_servers = system.settings.config.getString("kafka.producer.bootstrap.servers")
+  val bootstrap_servers: String = system.settings.config.getString("kafka.producer.bootstrap.servers")
 
-  val consumerSettings = ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
+  val consumerSettings: ConsumerSettings[String, String] = ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
     .withBootstrapServers(bootstrap_servers)
     .withGroupId("PredictSpeedData")
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
 
-  val source = Consumer.committableSource(consumerSettings, Subscriptions.topics("PredictionResult"))
+  val source: Source[String, Consumer.Control] = Consumer.committableSource(consumerSettings, Subscriptions.topics("PredictionResult"))
     .map(msg => msg.record.value())
 
 

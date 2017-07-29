@@ -36,8 +36,7 @@ lazy val commonSettings = Seq(
     "net.liftweb" % "lift-json_2.11" % "2.6.3",
     // https://mvnrepository.com/artifact/org.reactivestreams/reactive-streams
     "org.reactivestreams" % "reactive-streams" % "1.0.0",
-    "io.reactivex" % "rxjava-reactive-streams" % "1.2.1",
-    "io.reactivex" % "rxjava" % "1.2.2"
+    "io.reactivex.rxjava2" % "rxjava" % "2.1.2"
   ),
   assemblyMergeStrategy in assembly := {
     case PathList("com", "la", "platform", xs@_*) => MergeStrategy.last
