@@ -1,12 +1,13 @@
 package com.la.platform.common.rest
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
+import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.util.Timeout
 import spray.json.DefaultJsonProtocol
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -16,9 +17,11 @@ abstract class AbstractRestService(implicit system: ActorSystem) extends RestEnd
 
   protected implicit val timeout: Timeout = 5000 milliseconds
 
-  protected implicit val systemAkka = system
+  protected implicit val systemAkka: ActorSystem = system
 
-  protected implicit val executorService = scala.concurrent.ExecutionContext.Implicits.global
+  protected implicit val executorService: ExecutionContextExecutor = scala.concurrent.ExecutionContext.Implicits.global
+
+  protected val log: LoggingAdapter = Logging(system, getClass)
 
   def stopActors(actors: ActorRef*): Unit = {
     actors.foreach(actor => actor ! PoisonPill)
@@ -30,13 +33,14 @@ abstract class AbstractRestService(implicit system: ActorSystem) extends RestEnd
 
   /**
     * complete the action, resolve future result and stop actros
+    *
     * @param execute
     * @param actors
     * @tparam R
     * @return
     */
-  def completeAndCleanUpAct[R](execute: => Future[R], actors: ActorRef*): Future[R] = {
-    execute.andThen {
+  def completeAndCleanUpAct[R](execute:() => Future[R])(actors: ActorRef*): Future[R] = {
+    execute().andThen {
       case Success(s) => {
         actors.foreach(actor => actor ! PoisonPill)
         s
@@ -50,11 +54,12 @@ abstract class AbstractRestService(implicit system: ActorSystem) extends RestEnd
 
   /**
     * complete the action, resolve future result
+    *
     * @param execute
     * @tparam R
     * @return
     */
-  def completeAndCleanUpAct[R](execute: => Future[R]): Future[R] = {
+  def completeAction[R](execute: => Future[R]): Future[R] = {
     execute.andThen {
       case Success(s) => {
         s
@@ -64,4 +69,6 @@ abstract class AbstractRestService(implicit system: ActorSystem) extends RestEnd
       }
     }
   }
+
+  def test(test:() => String): Unit = println(test.apply())
 }

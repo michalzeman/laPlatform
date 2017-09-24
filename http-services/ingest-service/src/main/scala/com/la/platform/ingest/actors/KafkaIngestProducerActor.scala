@@ -3,7 +3,7 @@ package com.la.platform.ingest.actors
 import java.util.UUID
 
 import akka.Done
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.kafka.ProducerSettings
 import akka.kafka.scaladsl.Producer
 import akka.routing.FromConfig
@@ -25,7 +25,7 @@ import scala.concurrent.Future
   */
 class KafkaIngestProducerActor extends Actor with ActorLogging {
 
-  implicit val formats = DefaultFormats
+  implicit val formats: DefaultFormats = DefaultFormats
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
@@ -39,15 +39,18 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
   val publisher: PublishProcessor[IngestData] = PublishProcessor.create[IngestData]()
 
   val producerSource: Future[Done] = Source.fromPublisher(publisher)
-    .map(mapMsg)
+    .mapAsync(1)(mapMsg)
     .runWith(Producer.plainSink(producerSettings, kafkaProducer))
 
 
-  private def mapMsg(element: IngestData): ProducerRecord[Integer, String] = {
-    val now = java.time.LocalDateTime.now().toString
-    val messageVal = write(KafkaIngestDataMessage(element.value, element.originator, now))
-    log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
-    new ProducerRecord[Integer, String]("IngestData", 1, messageVal)
+  private def mapMsg(element: IngestData): Future[ProducerRecord[Integer, String]] = {
+    implicit val dispatcher = context.dispatcher
+    Future {
+      val now = java.time.LocalDateTime.now().toString
+      val messageVal = write(KafkaIngestDataMessage(element.value, element.originator, now))
+      log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
+      new ProducerRecord[Integer, String]("IngestData", 1, messageVal)
+    }
   }
 
   override def receive: Receive = {
@@ -62,7 +65,7 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
   def sendMsgToKafka(ingestData: IngestData): Unit = {
     log.info(s"${getClass.getCanonicalName} produceData() ->")
     publisher.onNext(ingestData)
-    sender ! DataIngested("OK")
+    ingestData.requester ! DataIngested("OK")
   }
 
   @scala.throws[Exception](classOf[Exception])
@@ -74,7 +77,7 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
 
 object KafkaIngestProducerActor {
 
-  case class IngestData(key: UUID, value: String, originator: Option[String])
+  case class IngestData(key: UUID, value: String, originator: Option[String], requester: ActorRef)
 
   case class DataIngested(value: String)
 

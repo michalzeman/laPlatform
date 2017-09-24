@@ -32,10 +32,10 @@ trait AbstractMain extends App {
 
   val routes = logRequestResult("", InfoLevel)(buildRoutes())
 
-  val bindingFuture: Future[ServerBinding] = Http().bindAndHandle(routes, settings.Http.interface, settings.Http.port)
+  val bindingFuture: Future[ServerBinding] = Http().bindAndHandleAsync(Route.asyncHandler(routes), settings.Http.interface, settings.Http.port)
 
   bindingFuture.onFailure{ case ex: Exception =>
-    println(ex, "Failed to bind to {}:{}!", settings.Http.interface, settings.Http.port)
+    logger.error("Failed to bind to {}:{}!", settings.Http.interface, settings.Http.port, ex)
   }
 
   bindingFuture map { binding =>

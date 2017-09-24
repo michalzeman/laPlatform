@@ -3,8 +3,8 @@ package com.la.platform.predict.rest
 import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.pattern._
 import akka.util.Timeout
 import com.la.platform.common.rest.AbstractRestService
@@ -39,14 +39,15 @@ class PredictRestService(implicit system: ActorSystem) extends AbstractRestServi
     * @return
     */
   def predict(predict: PredictRequest): Future[PredictResponse] = {
-    getPredictActor.flatMap(predictAct => completeAndCleanUpAct({
-        (predictAct ? PredictServiceActor.PredictRequestMsg(predict.data)).mapTo[PredictServiceActor.PredictResponseMsg]
-          .map(responseMsg => PredictResponse(responseMsg.result))
-      }, predictAct))
+    getPredictActor.flatMap(predictAct => completeAndCleanUpAct(() => {
+      (predictAct ? PredictServiceActor.PredictRequestMsg(predict.data)).mapTo[PredictServiceActor.PredictResponseMsg]
+        .map(responseMsg => PredictResponse(responseMsg.result))
+    })(predictAct))
   }
 
   /**
     * Create PredictActor
+    *
     * @return actorRef
     */
   def getPredictActor: Future[ActorRef] = {
