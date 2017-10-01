@@ -11,6 +11,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData}
 import com.la.platform.ingest.bus.IngestEventBusExtension
+import com.la.platform.ingest.streams.{PublisherStreamBuilder, PublisherStream}
 import io.reactivex.processors.PublishProcessor
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.Serialization.write
@@ -23,35 +24,9 @@ import scala.concurrent.Future
 /**
   * Created by zemi on 25/10/2016.
   */
-class KafkaIngestProducerActor extends Actor with ActorLogging {
+class KafkaIngestProducerActor(publisherStreamBuilder: PublisherStreamBuilder) extends Actor with ActorLogging {
 
-  implicit val formats: DefaultFormats = DefaultFormats
-
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
-
-  val bootstrap_servers: String = context.system.settings.config.getString("kafka.producer.bootstrap.servers")
-
-  val producerSettings: ProducerSettings[Integer, String] = ProducerSettings(context.system, new IntegerSerializer, new StringSerializer)
-    .withBootstrapServers(bootstrap_servers)
-
-  val kafkaProducer: KafkaProducer[Integer, String] = producerSettings.createKafkaProducer()
-
-  val publisher: PublishProcessor[IngestData] = PublishProcessor.create[IngestData]()
-
-  val producerSource: Future[Done] = Source.fromPublisher(publisher)
-    .mapAsync(1)(mapMsg)
-    .runWith(Producer.plainSink(producerSettings, kafkaProducer))
-
-
-  private def mapMsg(element: IngestData): Future[ProducerRecord[Integer, String]] = {
-    implicit val dispatcher = context.dispatcher
-    Future {
-      val now = java.time.LocalDateTime.now().toString
-      val messageVal = write(KafkaIngestDataMessage(element.value, element.originator, now))
-      log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
-      new ProducerRecord[Integer, String]("IngestData", 1, messageVal)
-    }
-  }
+  var publisher: PublisherStream = _
 
   override def receive: Receive = {
     case msg:IngestData => sendMsgToKafka(msg)
@@ -69,7 +44,10 @@ class KafkaIngestProducerActor extends Actor with ActorLogging {
   }
 
   @scala.throws[Exception](classOf[Exception])
-  override def preStart(): Unit = IngestEventBusExtension(context.system).eventBus.subscribe(self, classOf[IngestData])
+  override def preStart(): Unit = {
+    IngestEventBusExtension(context.system).eventBus.subscribe(self, classOf[IngestData])
+    publisher = publisherStreamBuilder.create(ActorMaterializer(), context.system, self)
+  }
 
   @scala.throws[Exception](classOf[Exception])
   override def postStop(): Unit = IngestEventBusExtension(context.system).eventBus.unsubscribe(self, classOf[IngestData])
@@ -83,6 +61,6 @@ object KafkaIngestProducerActor {
 
   val ACTOR_NAME = "kafkaIngestProducer"
 
-    def props: Props = Props[KafkaIngestProducerActor]
+    def props(publisherStreamBuilder: PublisherStreamBuilder): Props = Props(new KafkaIngestProducerActor(publisherStreamBuilder))
 //  def props(): Props = FromConfig.props(Props(classOf[KafkaIngestProducerActor]))
 }

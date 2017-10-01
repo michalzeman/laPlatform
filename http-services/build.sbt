@@ -26,8 +26,8 @@ lazy val commonSettings = Seq(
     "com.typesafe.akka" %% "akka-slf4j" % akkaV,
     "com.typesafe.akka" %% "akka-testkit" % akkaV % "test",
     "org.mockito" % "mockito-all" % "1.10.19" % "test",
-    "org.scalamock" %% "scalamock-scalatest-support" % "3.2.2" % "test",
-    "org.scalatest" %%"scalatest" % "3.0.0" % "test",
+    "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % "test",
+    "org.scalatest" %%"scalatest" % "3.0.4" % "test",
     //DB dependencies
     "org.postgresql" % "postgresql" % "9.4-1203-jdbc42",
     "com.zaxxer" % "HikariCP" % "2.4.1",
