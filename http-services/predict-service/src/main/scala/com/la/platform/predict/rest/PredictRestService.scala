@@ -9,7 +9,6 @@ import akka.pattern._
 import akka.util.Timeout
 import com.la.platform.common.rest.AbstractRestService
 import com.la.platform.predict.actors.PredictActionActor
-import com.la.platform.predict.actors.ml.PredictServiceActor
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -40,7 +39,7 @@ class PredictRestService(implicit system: ActorSystem) extends AbstractRestServi
     */
   def predict(predict: PredictRequest): Future[PredictResponse] = {
     getPredictActor.flatMap(predictAct => completeAndCleanUpAct(() => {
-      (predictAct ? PredictServiceActor.PredictRequestMsg(predict.data)).mapTo[PredictServiceActor.PredictResponseMsg]
+      (predictAct ? PredictActionActor.PredictRequest(predict.data)).mapTo[PredictActionActor.PredictResponse]
         .map(responseMsg => PredictResponse(responseMsg.result))
     })(predictAct))
   }

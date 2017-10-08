@@ -1,10 +1,9 @@
 package com.la.platform.predict.actors.kafka
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike, Matchers}
-import org.mockito.Mockito._
 
 
 /**

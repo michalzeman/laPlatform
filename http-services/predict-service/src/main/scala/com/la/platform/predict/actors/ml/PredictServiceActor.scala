@@ -1,89 +1,70 @@
 package com.la.platform.predict.actors.ml
 
-import akka.actor.{Actor, ActorLogging, Props}
-import akka.pattern._
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
-import com.la.platform.predict.actors.PredictActorSelection
-import com.la.platform.predict.actors.ml.PredictServiceActor.PredictionResult
-import org.apache.spark.ml.classification.LogisticRegressionModel
-import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.SparkSession
+import com.la.platform.predict.actors.ml.PredictServiceActor.{PredictRequest, PredictionResult, ReloadMlModel}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 /**
   * Created by zemi on 14/12/2016.
   */
-class PredictServiceActor extends Actor with ActorLogging with PredictActorSelection {
+class PredictServiceActor(logisticRegressionBuilder: LogisticRegressionProviderBuilder) extends Actor with ActorLogging {
 
   protected implicit val timeout: Timeout = 2000.milliseconds
 
-  val modelPath: String = context.system.settings.config.getString("ml.logistic.regression.model.path")
+  implicit val dispatcher: ExecutionContextExecutor  = context.dispatcher
 
-  val spark: SparkSession = SparkSession
-    .builder
-    .appName("PredictService")
-    .master("local[*]")
-    .getOrCreate()
-
-  var lrModel: Option[LogisticRegressionModel] = loadMlModel
+  val logisticRegressionProvider: LogisticRegressionProvider = logisticRegressionBuilder.build(self, context.system)
 
 
   override def receive: Receive = {
-    case msg: PredictServiceActor.PredictRequestMsg => predict(msg) pipeTo sender
-    case PredictServiceActor.ReloadMlModel => {
+    case cmd: PredictServiceActor.PredictRequest => predict(cmd)
+    case cmd: PredictServiceActor.ReloadMlModel => {
       log.debug(s"${getClass.getCanonicalName} -> ReloadMlModel")
-      lrModel = loadMlModel
+      logisticRegressionProvider.loadMlModel()
     }
     case msg: Any => log.warning(s"${getClass.getCanonicalName} received unsupported message: ${msg.getClass}")
   }
 
   /**
-    * Load Ml model
-    *
-    * @return Option[LogisticRegressionModel]
-    */
-  private def loadMlModel: Option[LogisticRegressionModel] = {
-    Some(LogisticRegressionModel
-      .load(modelPath))
-  }
-
-  /**
     * make prediction
     *
-    * @param msg
+    * @param cmd
     * @return
     */
-  private def predict(msg: PredictServiceActor.PredictRequestMsg): Future[PredictServiceActor.PredictResponseMsg] = {
-    val p = Promise[PredictServiceActor.PredictResponseMsg]
+  private def predict(cmd: PredictServiceActor.PredictRequest): Unit = {
     Future {
-      lrModel.foreach(model => {
-        val features = Vectors.dense(msg.data.split(" ").map(item => item.split(":")(1)).map(_.toDouble))
-        val forPredictionDF = spark.createDataFrame(Seq((0.0, features))).toDF("label", "features").select("features")
-        val predResultList = model.transform(forPredictionDF).select("prediction").collect().toList
-        val result = if (predResultList.isEmpty) "error" else predResultList.head.get(0).toString
-        p.success(PredictServiceActor.PredictResponseMsg(result))
-        selectPredictionResultKafkaProducerActor ! PredictionResult(result, msg.data)
-      })
+      val result = logisticRegressionProvider.predict(cmd.data).getOrElse("error")
+      cmd.requester ! PredictServiceActor.PredictResponse(result)
+      context.system.eventStream.publish(PredictionResult(result, cmd.data))
     }
-    p.future
   }
 
+  override def preStart(): Unit = {
+    context.system.eventStream.subscribe(self, classOf[PredictRequest])
+    context.system.eventStream.subscribe(self, classOf[ReloadMlModel])
+  }
+
+  override def postStop(): Unit = {
+    context.system.eventStream.unsubscribe(self, classOf[PredictRequest])
+    context.system.eventStream.unsubscribe(self, classOf[ReloadMlModel])
+  }
 }
 
 object PredictServiceActor {
 
-  case object ReloadMlModel
+  case class ReloadMlModel()
 
-  case class PredictRequestMsg(data: String)
+  case class PredictRequest(data: String, requester: ActorRef)
 
-  case class PredictResponseMsg(result: String)
+  case class PredictResponse(result: String)
 
   case class PredictionResult(prediction: String, data: String)
 
   val actor_name = "PredictServiceActor"
 
-  def props: Props = Props[PredictServiceActor]
+  def props(logisticRegressionBuilder: LogisticRegressionProviderBuilder): Props =
+    Props(new PredictServiceActor(logisticRegressionBuilder))
 }

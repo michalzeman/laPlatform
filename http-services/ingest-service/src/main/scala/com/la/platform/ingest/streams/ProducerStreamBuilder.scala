@@ -7,14 +7,14 @@ import akka.stream.ActorMaterializer
   * Created by zemi on 28/09/2017.
   */
 trait PublisherStreamBuilder {
-  def create(materializer: ActorMaterializer, system: ActorSystem, supervisor: ActorRef): ProducerStream
+  def build(materializer: ActorMaterializer, system: ActorSystem, supervisor: ActorRef): ProducerStream
 }
 
 object PublisherStreamBuilder {
-  def get: PublisherStreamBuilder = new PublisherStreamBuilderImpl()
+  def builder: PublisherStreamBuilder = new PublisherStreamBuilderImpl()
 }
 
 private class PublisherStreamBuilderImpl extends PublisherStreamBuilder {
-  override def create(materializer: ActorMaterializer, system: ActorSystem, supervisor: ActorRef): ProducerStream =
+  override def build(materializer: ActorMaterializer, system: ActorSystem, supervisor: ActorRef): ProducerStream =
     ProducerStream(materializer, system, supervisor)
 }

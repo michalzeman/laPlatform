@@ -3,8 +3,6 @@ package com.la.platform.ingest.actors.supervisors
 import akka.actor.{ActorRef, Props}
 import com.la.platform.common.actors.kafka.KafkaSupervisorActor
 import com.la.platform.ingest.actors.KafkaIngestProducerActor
-import com.la.platform.ingest.actors.KafkaIngestProducerActor.IngestData
-import com.la.platform.ingest.bus.IngestEventBusExtension
 import com.la.platform.ingest.streams.PublisherStreamBuilder
 
 /**
@@ -12,7 +10,7 @@ import com.la.platform.ingest.streams.PublisherStreamBuilder
   */
 class IngestKafkaProducerSupervisorActor extends KafkaSupervisorActor {
 
-  val kafkaIngestProducerActor: ActorRef = context.actorOf(KafkaIngestProducerActor.props(PublisherStreamBuilder.get),
+  val kafkaIngestProducerActor: ActorRef = context.actorOf(KafkaIngestProducerActor.props(PublisherStreamBuilder.builder),
     KafkaIngestProducerActor.ACTOR_NAME)
 
   context.watch(kafkaIngestProducerActor)

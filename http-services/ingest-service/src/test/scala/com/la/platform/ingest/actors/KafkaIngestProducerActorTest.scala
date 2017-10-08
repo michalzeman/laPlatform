@@ -25,7 +25,7 @@ class KafkaIngestProducerActorTest extends TestKit(ActorSystem("ingest-data-http
 
     val publisherStreamBuilder = mock[PublisherStreamBuilder]
     val publisherStream = mock[ProducerStream]
-    when(publisherStreamBuilder.create(any[ActorMaterializer], any[ActorSystem], any[ActorRef])).thenReturn(publisherStream)
+    when(publisherStreamBuilder.build(any[ActorMaterializer], any[ActorSystem], any[ActorRef])).thenReturn(publisherStream)
 
     val kafkaProducer = system.actorOf(KafkaIngestProducerActor.props(publisherStreamBuilder))
 

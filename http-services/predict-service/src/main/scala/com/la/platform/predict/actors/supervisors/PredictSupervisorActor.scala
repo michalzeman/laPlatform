@@ -2,9 +2,9 @@ package com.la.platform.predict.actors.supervisors
 
 import java.util.concurrent.ExecutionException
 
-import akka.actor.{Actor, ActorLogging, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
-import com.la.platform.predict.actors.ml.PredictServiceActor
+import akka.actor.{Actor, ActorLogging, OneForOneStrategy, Props, SupervisorStrategy}
+import com.la.platform.predict.actors.ml.{LogisticRegressionProviderBuilder, PredictServiceActor}
 
 import scala.concurrent.duration._
 
@@ -13,7 +13,8 @@ import scala.concurrent.duration._
   */
 class PredictSupervisorActor extends Actor with ActorLogging {
 
-  val predictService = context.actorOf(PredictServiceActor.props, PredictServiceActor.actor_name)
+  val predictService = context.actorOf(PredictServiceActor.props(LogisticRegressionProviderBuilder.get),
+    PredictServiceActor.actor_name)
 
   context.watch(predictService)
 
