@@ -15,6 +15,7 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.11.8",
   scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),
   libraryDependencies ++= Seq(
+    "com.typesafe.akka" %% "akka-stream-kafka" % akkaStreamKafkaV,
     "com.typesafe" % "config" % "1.3.0",
     "com.typesafe.akka" %% "akka-http-core" % akkaHttpV,
     "com.typesafe.akka" %% "akka-stream" % akkaV,

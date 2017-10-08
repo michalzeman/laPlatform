@@ -11,7 +11,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.{DataIngested, IngestData}
 import com.la.platform.ingest.bus.IngestEventBusExtension
-import com.la.platform.ingest.streams.{PublisherStreamBuilder, PublisherStream}
+import com.la.platform.ingest.streams.{PublisherStreamBuilder, ProducerStream}
 import io.reactivex.processors.PublishProcessor
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.Serialization.write
@@ -26,7 +26,7 @@ import scala.concurrent.Future
   */
 class KafkaIngestProducerActor(publisherStreamBuilder: PublisherStreamBuilder) extends Actor with ActorLogging {
 
-  var publisher: PublisherStream = _
+  var publisher: ProducerStream = _
 
   override def receive: Receive = {
     case msg:IngestData => sendMsgToKafka(msg)

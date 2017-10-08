@@ -1,12 +1,13 @@
 package com.la.platform.ingest.streams
 
-import akka.Done
+import akka.{Done, NotUsed}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{Logging, LoggingAdapter}
 import akka.kafka.ProducerSettings
 import akka.kafka.scaladsl.Producer
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
+import com.la.platform.common.streams.AbstractKafkaProducerStream
 import com.la.platform.ingest.actors.KafkaIngestDataMessage
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.IngestData
 import io.reactivex.processors.PublishProcessor
@@ -14,44 +15,32 @@ import net.liftweb.json.DefaultFormats
 import net.liftweb.json.Serialization.write
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.{IntegerSerializer, StringSerializer}
-import org.reactivestreams.Publisher
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 /**
   * Created by zemi on 28/09/2017.
   */
-trait PublisherStream {
+trait ProducerStream {
 
   def onNext(value: IngestData): Unit
 
 }
 
-object PublisherStream {
-  def apply(materializer: ActorMaterializer, system: ActorSystem, supervisor: ActorRef): PublisherStream = new PublisherStreamImpl(system, supervisor, materializer)
+object ProducerStream {
+  def apply(materializer: ActorMaterializer, system: ActorSystem, supervisor: ActorRef): ProducerStream = new ProducerStreamImpl(system, supervisor, materializer)
 }
 
 /**
   * Created by zemi on 28/09/2017.
   */
-private class PublisherStreamImpl(system: ActorSystem, supervisor: ActorRef, implicit val materializer: ActorMaterializer) extends PublisherStream {
-
-  protected val log: LoggingAdapter = Logging(system, getClass)
-
-  protected implicit val executorService: ExecutionContextExecutor = system.dispatcher
+private class ProducerStreamImpl(system: ActorSystem, supervisor: ActorRef, override implicit val materializer: ActorMaterializer)
+  extends AbstractKafkaProducerStream[IngestData, Integer, String](system, supervisor, materializer)
+    with ProducerStream  {
 
   implicit val formats: DefaultFormats = DefaultFormats
 
-  private val bootstrap_servers: String = system.settings.config.getString("kafka.producer.bootstrap.servers")
-
-  private val producerSettings: ProducerSettings[Integer, String] = ProducerSettings(system, new IntegerSerializer, new StringSerializer)
-    .withBootstrapServers(bootstrap_servers)
-
-  private val kafkaProducer: KafkaProducer[Integer, String] = producerSettings.createKafkaProducer()
-
-  private val publisher: PublishProcessor[IngestData] = PublishProcessor.create[IngestData]()
-
-  private val producerSource: Future[Done] = Source.fromPublisher(publisher)
+  producerSource
     .mapAsync(1)(mapMsg)
     .runWith(Producer.plainSink(producerSettings, kafkaProducer))
 
@@ -68,4 +57,8 @@ private class PublisherStreamImpl(system: ActorSystem, supervisor: ActorRef, imp
     publisher.onNext(value)
   }
 
+  override protected def getBootstrapServers: String = system.settings.config.getString("kafka.producer.bootstrap.servers")
+
+  override def getProducerSettings: ProducerSettings[Integer, String] =
+    ProducerSettings(system, new IntegerSerializer, new StringSerializer)
 }
