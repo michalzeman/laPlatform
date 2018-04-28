@@ -2,6 +2,7 @@ package com.la.platform.predict.actors.supervisors
 
 import akka.actor.{ActorRef, Props}
 import com.la.platform.common.actors.kafka.KafkaSupervisorActor
+import com.la.platform.predict.actors.kafka.streams.{ConsumerReloadModelStreamBuilder, PredictionResultKafkaProducerStreamBuilder}
 import com.la.platform.predict.actors.kafka.{PredictReloadModelKafkaConsumerActor, PredictionResultKafkaProducerActor}
 
 /**
@@ -10,11 +11,11 @@ import com.la.platform.predict.actors.kafka.{PredictReloadModelKafkaConsumerActo
 class PredictKafkaSupervisorActor extends KafkaSupervisorActor {
 
   val predictionResultKafkaProducer: ActorRef = context.actorOf(PredictionResultKafkaProducerActor
-    .props, PredictionResultKafkaProducerActor.actor_name)
+    .props(PredictionResultKafkaProducerStreamBuilder.builder()), PredictionResultKafkaProducerActor.actor_name)
 
   context.watch(predictionResultKafkaProducer)
 
-  val predictReloadModelKafkaConsumerActor: ActorRef = context.actorOf(PredictReloadModelKafkaConsumerActor.props,
+  val predictReloadModelKafkaConsumerActor: ActorRef = context.actorOf(PredictReloadModelKafkaConsumerActor.props(ConsumerReloadModelStreamBuilder.builder),
     PredictReloadModelKafkaConsumerActor.actor_name)
 
   context.watch(predictReloadModelKafkaConsumerActor)

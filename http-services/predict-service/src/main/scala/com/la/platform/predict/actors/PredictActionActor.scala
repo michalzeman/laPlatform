@@ -21,6 +21,7 @@ class PredictActionActor extends Actor with ActorLogging {
     case PredictServiceActor.PredictResponse(result) => {
       log.info(s"${self.path} -> PredictResponseMsg")
       requester ! PredictResponse(result)
+      context.stop(self)
     }
   }
 

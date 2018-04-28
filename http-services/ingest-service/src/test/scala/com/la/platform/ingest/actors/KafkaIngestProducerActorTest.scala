@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestKit}
 import com.la.platform.ingest.rest.Ingest
-import com.la.platform.ingest.streams.{ProducerStream, PublisherStreamBuilder}
+import com.la.platform.ingest.streams.{PublisherStream, PublisherStreamBuilder}
 import org.mockito.Matchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -24,7 +24,7 @@ class KafkaIngestProducerActorTest extends TestKit(ActorSystem("ingest-data-http
   test("send msg to kafka producer") {
 
     val publisherStreamBuilder = mock[PublisherStreamBuilder]
-    val publisherStream = mock[ProducerStream]
+    val publisherStream = mock[PublisherStream]
     when(publisherStreamBuilder.build(any[ActorMaterializer], any[ActorSystem], any[ActorRef])).thenReturn(publisherStream)
 
     val kafkaProducer = system.actorOf(KafkaIngestProducerActor.props(publisherStreamBuilder))

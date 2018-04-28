@@ -13,7 +13,7 @@ object LogisticRegressionProviderBuilder {
  def get: LogisticRegressionProviderBuilder = new LogisticRegressionProviderBuilderImpl()
 }
 
-private class LogisticRegressionProviderBuilderImpl extends LogisticRegressionProviderBuilder {
+private[ml] class LogisticRegressionProviderBuilderImpl extends LogisticRegressionProviderBuilder {
   override def build(supervisor: ActorRef, system: ActorSystem): LogisticRegressionProvider =
     LogisticRegressionProvider(supervisor, system)
 }

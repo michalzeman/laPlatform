@@ -16,12 +16,15 @@ class PredictServiceActor(logisticRegressionBuilder: LogisticRegressionProviderB
 
   implicit val dispatcher: ExecutionContextExecutor  = context.dispatcher
 
+  context.system.eventStream.subscribe(self, classOf[PredictRequest])
+  context.system.eventStream.subscribe(self, classOf[ReloadMlModel])
+
   val logisticRegressionProvider: LogisticRegressionProvider = logisticRegressionBuilder.build(self, context.system)
 
 
   override def receive: Receive = {
-    case cmd: PredictServiceActor.PredictRequest => predict(cmd)
-    case cmd: PredictServiceActor.ReloadMlModel => {
+    case cmd: PredictRequest => predict(cmd)
+    case cmd: ReloadMlModel => {
       log.debug(s"${getClass.getCanonicalName} -> ReloadMlModel")
       logisticRegressionProvider.loadMlModel()
     }
@@ -34,7 +37,7 @@ class PredictServiceActor(logisticRegressionBuilder: LogisticRegressionProviderB
     * @param cmd
     * @return
     */
-  private def predict(cmd: PredictServiceActor.PredictRequest): Unit = {
+  private def predict(cmd: PredictRequest): Unit = {
     Future {
       val result = logisticRegressionProvider.predict(cmd.data).getOrElse("error")
       cmd.requester ! PredictServiceActor.PredictResponse(result)
@@ -43,8 +46,7 @@ class PredictServiceActor(logisticRegressionBuilder: LogisticRegressionProviderB
   }
 
   override def preStart(): Unit = {
-    context.system.eventStream.subscribe(self, classOf[PredictRequest])
-    context.system.eventStream.subscribe(self, classOf[ReloadMlModel])
+//    Source.fromPublisher()
   }
 
   override def postStop(): Unit = {

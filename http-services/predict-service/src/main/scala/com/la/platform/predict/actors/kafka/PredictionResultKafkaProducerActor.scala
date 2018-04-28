@@ -7,6 +7,7 @@ import akka.kafka.ProducerSettings
 import akka.kafka.scaladsl.Producer
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
+import com.la.platform.predict.actors.kafka.streams.{PredictionResultKafkaProducerStream, PredictionResultKafkaProducerStreamBuilder}
 import com.la.platform.predict.actors.ml.PredictServiceActor
 import io.reactivex.processors.PublishProcessor
 import net.liftweb.json.DefaultFormats
@@ -19,32 +20,21 @@ import scala.concurrent.Future
 /**
   * Created by zemi on 03/11/2016.
   */
-class PredictionResultKafkaProducerActor extends Actor with ActorLogging {
+class PredictionResultKafkaProducerActor(predictionResultKafkaProducerStreamBuilder: PredictionResultKafkaProducerStreamBuilder)
+  extends Actor with ActorLogging {
 
   implicit val formats = DefaultFormats
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  val bootstrap_servers: String = context.system.settings.config.getString("kafka.producer.bootstrap.servers")
+  var predictionResultKafkaProducerStream: Option[PredictionResultKafkaProducerStream] = None
 
-  val topic: String = context.system.settings.config.getString("kafka.producer.prediction.topic")
+  override def preStart(): Unit = {
+    super.preStart()
+    predictionResultKafkaProducerStream = Some(predictionResultKafkaProducerStreamBuilder.build(context.system, self))
+  }
 
-  val producerSettings: ProducerSettings[Integer, String] = ProducerSettings(context.system, new IntegerSerializer, new StringSerializer)
-    .withBootstrapServers(bootstrap_servers)
-
-  val kafkaProducer: KafkaProducer[Integer, String] = producerSettings.createKafkaProducer()
-
-  val publisher: PublishProcessor[PredictServiceActor.PredictionResult] = PublishProcessor.create()
-
-  //  val subject: PublishSubject[PredictServiceActor.PredictionResult] = PublishSubject.create[PredictServiceActor.PredictionResult]()
-
-  val producerSource: Future[Done] = Source.fromPublisher(publisher)
-    .map(msg => {
-      val kafkaMsg = write(msg)
-      log.debug(s"${getClass.getCanonicalName} produceData() -> message: $kafkaMsg")
-      new ProducerRecord[Integer, String](topic, 1, kafkaMsg)
-    })
-    .runWith(Producer.plainSink(producerSettings, kafkaProducer))
+  override def postStop(): Unit = super.postStop()
 
   override def receive: Receive = {
     case msg: PredictServiceActor.PredictionResult => sendMsgToKafka(msg)
@@ -58,7 +48,7 @@ class PredictionResultKafkaProducerActor extends Actor with ActorLogging {
     */
   def sendMsgToKafka(msg: PredictServiceActor.PredictionResult): Unit = {
     log.info(s"${getClass.getCanonicalName} produceData() -> message: $msg")
-    publisher.onNext(msg)
+    predictionResultKafkaProducerStream.foreach(_.onNext(msg))
     sender ! PredictRequestMsgSent
   }
 
@@ -68,5 +58,6 @@ object PredictionResultKafkaProducerActor {
 
   val actor_name = "PredictionResultKafkaProducer"
 
-  def props: Props = Props(classOf[PredictionResultKafkaProducerActor])
+  def props(predictionResultKafkaProducerStreamBuilder: PredictionResultKafkaProducerStreamBuilder): Props =
+    Props(new PredictionResultKafkaProducerActor(predictionResultKafkaProducerStreamBuilder))
 }
