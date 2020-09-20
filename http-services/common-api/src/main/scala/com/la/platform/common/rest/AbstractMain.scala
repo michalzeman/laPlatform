@@ -14,7 +14,7 @@ import com.la.platform.common.settings.Settings
 import com.typesafe.config.Config
 
 import scala.annotation.tailrec
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration._
 
 /**
@@ -22,11 +22,9 @@ import scala.concurrent.duration._
   */
 trait AbstractMain extends App {
 
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
-  implicit val ec = system.dispatcher
-
-  val logger = Logging(system, getClass)
+  implicit val system: ActorSystem = ActorSystem()
+  implicit val materializer :ActorMaterializer = ActorMaterializer()
+  implicit val ec: ExecutionContextExecutor = system.dispatcher
 
   lazy val settings = Settings(system.settings.config)
 
@@ -34,13 +32,9 @@ trait AbstractMain extends App {
 
   val bindingFuture: Future[ServerBinding] = Http().bindAndHandleAsync(Route.asyncHandler(routes), settings.Http.interface, settings.Http.port)
 
-  bindingFuture.onFailure{ case ex: Exception =>
-    logger.error("Failed to bind to {}:{}!", settings.Http.interface, settings.Http.port, ex)
+  bindingFuture recoverWith {
+    case _ => system.terminate()
   }
-
-  bindingFuture map { binding =>
-    logger.info(s"Server started on port {}", binding.localAddress.getPort)
-  } recoverWith { case _ => system.terminate() }
 
   /**
     * Build all available routs

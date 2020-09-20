@@ -4,15 +4,15 @@ name := "http-services"
 
 val akkaV = "2.5.1"
 val akkaHttpV = "10.0.6"
-val kafkaV = "0.10.0.1"
+val kafkaV = "2.6.0"
 val scalaTestV = "2.2.6"
-val sparkV = "2.0.0"
+val sparkV = "2.4.7"
 val akkaStreamKafkaV = "0.13"
 
 lazy val commonSettings = Seq(
   organization := "com.la.platform.http",
   version := "1.0",
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.11",
   scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),
   libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-stream-kafka" % akkaStreamKafkaV,
@@ -34,7 +34,6 @@ lazy val commonSettings = Seq(
     "com.zaxxer" % "HikariCP" % "2.4.1",
     "org.apache.kafka" %% "kafka" % kafkaV,
     "org.apache.kafka" % "kafka-clients" % kafkaV,
-    "net.liftweb" % "lift-json_2.11" % "2.6.3",
     // https://mvnrepository.com/artifact/org.reactivestreams/reactive-streams
     "org.reactivestreams" % "reactive-streams" % "1.0.0",
     "io.reactivex.rxjava2" % "rxjava" % "2.1.2"

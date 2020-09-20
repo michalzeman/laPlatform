@@ -1,9 +1,9 @@
 package com.la.platform.batch.transform
 
 import com.la.platform.batch.cli.{CliParams, DataJobMain}
-import org.apache.spark.sql.SparkSession
 import com.la.platform.batch.services.TransformDataService
 import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.sql.SparkSession
 
 
 /**

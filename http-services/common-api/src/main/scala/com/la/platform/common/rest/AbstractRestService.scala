@@ -7,7 +7,7 @@ import akka.util.Timeout
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -19,7 +19,7 @@ abstract class AbstractRestService(implicit system: ActorSystem) extends RestEnd
 
   protected implicit val systemAkka: ActorSystem = system
 
-  protected implicit val executorService: ExecutionContextExecutor = scala.concurrent.ExecutionContext.Implicits.global
+  protected implicit val executorService: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   protected val log: LoggingAdapter = Logging(system, getClass)
 

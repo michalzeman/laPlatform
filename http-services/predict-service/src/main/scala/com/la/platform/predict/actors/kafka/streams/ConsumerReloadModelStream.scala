@@ -12,13 +12,14 @@ import akka.stream.{ActorMaterializer, KillSwitches, UniqueKillSwitch}
 import com.la.platform.predict.actors.kafka.PredictReloadModelKafkaConsumerActor
 import com.la.platform.predict.actors.kafka.PredictReloadModelKafkaConsumerActor.PredictReloadModelJsonMsg
 import com.la.platform.predict.actors.ml.PredictServiceActor
-import net.liftweb.json.DefaultFormats
-import net.liftweb.json.Serialization.read
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+
+import spray.json._
+import DefaultJsonProtocol._
 
 /**
   * Created by zemi on 31/03/2018.
@@ -36,11 +37,9 @@ private[streams] class ConsumerReloadModelStreamImpl(supervisor: ActorRef, impli
 
   protected implicit val executorService = system.dispatcher
 
-  val bootstrap_servers = system.settings.config.getString("kafka.producer.bootstrap.servers")
+  val bootstrap_servers: String = system.settings.config.getString("kafka.producer.bootstrap.servers")
 
-  implicit val formats = DefaultFormats
-
-  val consumerSettings = ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
+  val consumerSettings: ConsumerSettings[String, String] = ConsumerSettings(system, new StringDeserializer, new StringDeserializer)
     .withBootstrapServers(bootstrap_servers)
     .withGroupId("PredictData")
     .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
@@ -50,7 +49,7 @@ private[streams] class ConsumerReloadModelStreamImpl(supervisor: ActorRef, impli
   val (killSwitches, done) = sourceStream.mapAsync(1) { msg =>
     val msgVal = msg.record.value()
     log.debug(s"Kafka consumer topic: predict-reload-model, message: $msgVal")
-    processMessage(read[PredictReloadModelJsonMsg](msgVal))
+    processMessage(msgVal.parseJson.convertTo[PredictReloadModelJsonMsg])
     Future.successful(Done).map(_ => msg)
   }
     .mapAsync(1)(msg => msg.committableOffset.commitScaladsl())

@@ -1,7 +1,7 @@
 package com.la.platform.batch.ingest
 
 import com.la.platform.batch.cli.CliParams
-import org.apache.commons.cli.{Options}
+import org.apache.commons.cli.Options
 
 /**
   * Created by zemi on 28/10/2016.

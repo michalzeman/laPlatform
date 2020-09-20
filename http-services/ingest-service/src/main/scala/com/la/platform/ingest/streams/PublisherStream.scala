@@ -7,10 +7,9 @@ import akka.stream.ActorMaterializer
 import com.la.platform.common.streams.AbstractKafkaProducerStream
 import com.la.platform.ingest.actors.KafkaIngestDataMessage
 import com.la.platform.ingest.actors.KafkaIngestProducerActor.IngestData
-import net.liftweb.json.DefaultFormats
-import net.liftweb.json.Serialization.write
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.{IntegerSerializer, StringSerializer}
+import spray.json._
 
 import scala.concurrent.Future
 
@@ -30,11 +29,9 @@ private[streams] object PublisherStreamImpl {
 /**
   * Created by zemi on 28/09/2017.
   */
-private[streams] class PublisherStreamImpl(system: ActorSystem, supervisor: ActorRef, override implicit val materializer: ActorMaterializer)
-  extends AbstractKafkaProducerStream[IngestData, Integer, String](system, supervisor, materializer)
+private[streams] class PublisherStreamImpl(system: ActorSystem, supervisor: ActorRef, implicit val materializer: ActorMaterializer)
+  extends AbstractKafkaProducerStream[IngestData, Integer, String](system, supervisor) (materializer)
     with PublisherStream {
-
-  implicit val formats: DefaultFormats = DefaultFormats
 
   producerSource
     .mapAsync(1)(mapMsg)
@@ -43,9 +40,9 @@ private[streams] class PublisherStreamImpl(system: ActorSystem, supervisor: Acto
   private def mapMsg(element: IngestData): Future[ProducerRecord[Integer, String]] = {
     Future {
       val now = java.time.LocalDateTime.now().toString
-      val messageVal = write(KafkaIngestDataMessage(element.value, element.originator, now))
+      val messageVal = KafkaIngestDataMessage(element.value, element.originator, now).toJson.toString()
       log.debug(s"${getClass.getCanonicalName} produceData() -> message: $messageVal")
-      new ProducerRecord[Integer, String]("IngestData", 1, messageVal)
+      new ProducerRecord[Integer, String]("IngestData", 1, s"$messageVal")
     }
   }
 

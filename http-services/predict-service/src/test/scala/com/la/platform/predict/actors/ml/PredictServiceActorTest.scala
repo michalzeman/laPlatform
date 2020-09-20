@@ -43,7 +43,9 @@ class PredictServiceActorTest extends TestKit(ActorSystem("predict-http-service-
     val predictServiceActor =  system.actorOf(PredictServiceActor.props(logisticRegressionProviderBuilder))
     predictServiceActor ! PredictServiceActor.ReloadMlModel()
 
-    verify(logisticRegressionProvider, org.mockito.Mockito.atLeast(1)).loadMlModel()
+    expectMsg(PredictServiceActor.MlModelReloaded)
+
+    verify(logisticRegressionProvider, org.mockito.Mockito.atLeast(1)).reloadMlModel()
   }
 
 }

@@ -6,33 +6,32 @@ import akka.kafka.scaladsl.Producer
 import akka.stream.ActorMaterializer
 import com.la.platform.common.streams.AbstractKafkaProducerStream
 import com.la.platform.predict.actors.ml.PredictServiceActor
-import net.liftweb.json.DefaultFormats
-import net.liftweb.json.Serialization.write
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.{IntegerSerializer, StringSerializer}
 
 import scala.concurrent.Future
 
+import spray.json._
+import DefaultJsonProtocol._
+
 /**
-  * Created by zemi on 03/04/2018.
-  */
+ * Created by zemi on 03/04/2018.
+ */
 trait PredictionResultKafkaProducerStream {
   def onNext(value: PredictServiceActor.PredictionResult): Unit
 }
 
 private[streams] class PredictionResultKafkaProducerStreamImpl
-(system: ActorSystem, supervisor: ActorRef) (implicit  materializer: ActorMaterializer)
-  extends AbstractKafkaProducerStream[PredictServiceActor.PredictionResult, Integer, String] (system, supervisor)
-  with PredictionResultKafkaProducerStream {
-
-  implicit val formats = DefaultFormats
+(system: ActorSystem, supervisor: ActorRef)(implicit materializer: ActorMaterializer)
+  extends AbstractKafkaProducerStream[PredictServiceActor.PredictionResult, Integer, String](system, supervisor)
+    with PredictionResultKafkaProducerStream {
 
   val topic: String = system.settings.config.getString("kafka.producer.prediction.topic")
 
   producerSource
     .mapAsync(1)(msg => {
       Future {
-        val kafkaMsg = write(msg)
+        val kafkaMsg = msg.toJson.toString()
         log.debug(s"${getClass.getCanonicalName} produceData() -> message: $kafkaMsg")
         new ProducerRecord[Integer, String](topic, 1, kafkaMsg)
       }

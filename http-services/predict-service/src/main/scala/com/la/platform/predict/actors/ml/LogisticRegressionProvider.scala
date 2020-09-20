@@ -8,13 +8,13 @@ import org.apache.spark.sql.SparkSession
 import scala.util.{Failure, Success, Try}
 
 /**
-  * Created by zemi on 08/10/2017.
-  */
+ * Created by zemi on 08/10/2017.
+ */
 trait LogisticRegressionProvider {
 
   def predict(data: String): Option[String]
 
-  def loadMlModel(): Unit
+  def reloadMlModel(): Unit
 
 }
 
@@ -43,27 +43,32 @@ private class LogisticRegressionProviderImpl(supervisor: ActorRef, system: Actor
       .getOrCreate())
   }
 
-  var lrModelOpt: Option[LogisticRegressionModel] = None
+  private def loadMlModel(): Option[LogisticRegressionModel] = Some(LogisticRegressionModel.load(modelPath))
 
-  loadMlModel()
+  var lrModelOpt: Option[LogisticRegressionModel] = loadMlModel()
 
-  override def predict(data: String): Option[String] = {
-    lrModelOpt.flatMap(model => sparkOpt.map(spark => {
-        val features = Vectors.dense(data.split(" ").map(item => item.split(":")(1)).map(_.toDouble))
-        val forPredictionDF = spark.createDataFrame(Seq((0.0, features))).toDF("label", "features").select("features")
-        val predResultList = model.transform(forPredictionDF).select("prediction").collect().toList
-        if (predResultList.isEmpty) "error" else predResultList.head.get(0).toString
+  override def predict(data: String): Option[String] =
+    lrModelOpt.flatMap(model =>
+      sparkOpt.map(spark => {
+        val features = Vectors.dense(data.split("(\\s)+").map(item => item.split(":")(1)).map(_.toDouble))
+        val forPredictionDF = spark.createDataFrame(Seq((0.0, features)))
+          .toDF("label", "features")
+          .select("features")
+        model.transform(forPredictionDF).select("prediction").collect().toList match {
+          case s::xs => s.get(0).toString
+          case Nil => "error"
+        }
       })
     )
-  }
+
 
   /**
-    * Load Ml model
-    *
-    * @return Option[LogisticRegressionModel]
-    */
-  override def loadMlModel(): Unit = {
-    lrModelOpt = Some(LogisticRegressionModel
-      .load(modelPath))
+   * Load Ml model
+   *
+   * @return Option[LogisticRegressionModel]
+   */
+  override def reloadMlModel(): Unit = {
+    lrModelOpt = loadMlModel()
   }
+
 }

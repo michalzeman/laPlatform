@@ -3,10 +3,10 @@ package com.la.platform.batch.training.lg
 import java.util
 import java.util.UUID
 
-import com.la.platform.batch.cli.{CliParams, DataJobMain}
-import com.la.platform.batch.ml.SvmIOUtils.loadDDRLibSVMFiles
+import com.la.platform.batch.cli.DataJobMain
 import com.la.platform.batch.common.constants._
 import com.la.platform.batch.kafka.KafkaProducerWrapper
+import com.la.platform.batch.ml.SvmIOUtils.loadDDRLibSVMFiles
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.feature.LabeledPoint
 import org.apache.spark.sql.{Row, SparkSession}

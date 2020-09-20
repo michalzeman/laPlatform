@@ -5,6 +5,8 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, Props}
 import com.la.platform.predict.actors.kafka.PredictReloadModelKafkaConsumerActor.Terminated
 import com.la.platform.predict.actors.kafka.streams.{ConsumerReloadModelStream, ConsumerReloadModelStreamBuilder}
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
 /**
   * Created by zemi on 03/11/2016.
@@ -43,6 +45,10 @@ object PredictReloadModelKafkaConsumerActor {
   case object Terminated
 
   case class PredictReloadModelJsonMsg(data: String, sender: String)
+
+  object PredictReloadModelJsonMsg {
+    implicit val format: RootJsonFormat[PredictReloadModelJsonMsg] = jsonFormat2(PredictReloadModelJsonMsg.apply)
+  }
 
   val actor_name = "PredictKafkaProducerSupervisor"
 

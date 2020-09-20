@@ -1,6 +1,6 @@
 package com.la.platform.ingest.bus
 
-import akka.actor.{ActorSystem, ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider}
+import akka.actor.{ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider}
 
 /**
   * Created by zemi on 21/07/2017.

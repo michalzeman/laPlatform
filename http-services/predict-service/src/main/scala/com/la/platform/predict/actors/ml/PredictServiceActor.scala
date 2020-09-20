@@ -2,7 +2,9 @@ package com.la.platform.predict.actors.ml
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
-import com.la.platform.predict.actors.ml.PredictServiceActor.{PredictRequest, PredictionResult, ReloadMlModel}
+import com.la.platform.predict.actors.ml.PredictServiceActor.{MlModelReloaded, PredictRequest, PredictionResult, ReloadMlModel}
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -26,7 +28,8 @@ class PredictServiceActor(logisticRegressionBuilder: LogisticRegressionProviderB
     case cmd: PredictRequest => predict(cmd)
     case cmd: ReloadMlModel => {
       log.debug(s"${getClass.getCanonicalName} -> ReloadMlModel")
-      logisticRegressionProvider.loadMlModel()
+      logisticRegressionProvider.reloadMlModel()
+      sender ! MlModelReloaded
     }
     case msg: Any => log.warning(s"${getClass.getCanonicalName} received unsupported message: ${msg.getClass}")
   }
@@ -59,11 +62,17 @@ object PredictServiceActor {
 
   case class ReloadMlModel()
 
+  object MlModelReloaded
+
   case class PredictRequest(data: String, requester: ActorRef)
 
   case class PredictResponse(result: String)
 
   case class PredictionResult(prediction: String, data: String)
+
+  object PredictionResult {
+    implicit val format: RootJsonFormat[PredictionResult] = jsonFormat2(PredictionResult.apply)
+  }
 
   val actor_name = "PredictServiceActor"
 

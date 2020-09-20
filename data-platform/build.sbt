@@ -2,13 +2,13 @@ name := "data-platform"
 
 version := "1.0"
 
-val kafkaV = "0.10.0.1"
+val kafkaV = "2.6.0"
 
-val sparkV = "2.0.0"
+val sparkV = "2.4.7"
 
 lazy val commonSettings = Seq(
   version := "1.0",
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.11",
   scalacOptions := Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),
   //TODO: resolve this problem with adding separate task for assembly where those dependencies would switch to provided
   //  libraryDependencies ++= Seq(
@@ -58,8 +58,8 @@ lazy val assemblySettings = Seq(
 
 lazy val kafkaDepSettings = Seq(
   libraryDependencies ++= Seq(
-    "org.apache.spark" % "spark-streaming-kafka-0-10_2.11" % sparkV,
-    "org.apache.kafka" % "kafka_2.11" % kafkaV,
+    "org.apache.spark" %% "spark-streaming-kafka-0-10" % sparkV,
+    "org.apache.kafka" %% "kafka" % kafkaV,
     "org.apache.kafka" % "kafka-clients" % kafkaV
   )
 )

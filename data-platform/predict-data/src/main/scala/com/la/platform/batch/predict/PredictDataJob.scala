@@ -1,6 +1,5 @@
 package com.la.platform.batch.predict
 
-import java.lang.Boolean
 import java.util
 import java.util.UUID
 
@@ -9,7 +8,7 @@ import com.la.platform.batch.kafka.KafkaProducerWrapper
 import com.la.platform.batch.ml.LogisticRegressionUtils._
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.ml.classification.LogisticRegressionModel
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Dataset, Encoders, SparkSession}
 import org.apache.spark.streaming.kafka010.ConsumerStrategies._
 import org.apache.spark.streaming.kafka010.KafkaUtils
 import org.apache.spark.streaming.kafka010.LocationStrategies._
@@ -44,10 +43,13 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
 
     stream.map(record => record.value)
       .filter(record => !record.isEmpty)
+      .map(value => value)
       .foreachRDD(
         rdd => {
           val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
-          spark.read.json(rdd).foreachPartition(rowIterator => rowIterator.foreach(row => {
+          val jsonDataSet : Dataset[String] = spark.createDataset(rdd)(Encoders.STRING)
+
+          spark.read.json(jsonDataSet).foreach(row => {
             val predResult = predict(row, lrModel.value)
             val sender = row.getAs[String]("sender")
             val result =s"""{"data":"$predResult","sender":"$sender"}""".stripMargin
@@ -55,7 +57,7 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
             val data = row.getAs[String]("data")
             val speedData = s"""{"prediction":"$predResult","data":"$data"}""".stripMargin
             kafkaPredictionResultProducer.value.send("prediction-data", UUID.randomUUID().toString, speedData)
-          }))
+          })
         }
       )
 
@@ -70,7 +72,7 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
       "value.deserializer" -> classOf[StringDeserializer],
       "group.id" -> appName,
       "auto.offset.reset" -> "latest",
-      "enable.auto.commit" -> (false: Boolean)
+      "enable.auto.commit" -> (false: java.lang.Boolean)
     )
   }
 

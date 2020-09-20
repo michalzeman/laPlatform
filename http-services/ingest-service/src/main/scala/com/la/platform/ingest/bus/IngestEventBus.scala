@@ -10,12 +10,10 @@ import com.la.platform.ingest.actors.KafkaIngestProducerActor.IngestData
 class IngestEventBus extends EventBus with LookupClassification with ActorEventBus {
   override type Event = IngestData
   override type Classifier = Class[_]
-//  override type Classifier = String
 
   override protected def mapSize(): Int = 128
 
   override protected def classify(event: Event): Classifier = event.getClass
-//  override protected def classify(event: Event): Classifier = "ingest-data"
 
   override protected def publish(event: Event, subscriber: Subscriber): Unit = {
     subscriber ! event

@@ -1,22 +1,19 @@
 package com.la.platform.batch.ingest
 
 
-import java.lang.Boolean
-
 import com.la.platform.batch.cli.DataJobMain
 import com.la.platform.batch.common.constants._
-
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkContext
-import org.apache.spark.streaming.kafka010._
-import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
+import org.apache.spark.sql.{Dataset, Encoders, SparkSession}
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
+import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
+import org.apache.spark.streaming.kafka010._
+import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 /**
-  * Created by zemi on 28/10/2016.
-  */
+ * Created by zemi on 28/10/2016.
+ */
 object IngestDataJob extends DataJobMain[IngestDataCliParams] {
 
   def run(spark: SparkSession, opt: IngestDataCliParams): Unit = {
@@ -46,7 +43,7 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
             rddFiltered.saveAsTextFile(workingDirectory + s"$INGEST_DATA_PREFIX_PATH${java.util.UUID.randomUUID.toString}-${System.currentTimeMillis}")
           )
           val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
-          val json = spark.read.json(rdd)
+          val json : Dataset[String] = spark.createDataset(rdd)(Encoders.STRING)
           json.show()
         })
     streamingContext.start()
@@ -60,7 +57,7 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
       "value.deserializer" -> classOf[StringDeserializer],
       "group.id" -> appName,
       "auto.offset.reset" -> "latest",
-      "enable.auto.commit" -> (false: Boolean)
+      "enable.auto.commit" -> (false: java.lang.Boolean)
     )
   }
 

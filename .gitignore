@@ -1,0 +1,7 @@
+.idea
+*.iml
+**/target/**
+**/*.class
+**/spark-warehouse/**
+http-services/project/project/target/**
+
