@@ -22,8 +22,8 @@ import spray.json._
 import DefaultJsonProtocol._
 
 /**
-  * Created by zemi on 31/03/2018.
-  */
+ * Created by zemi on 31/03/2018.
+ */
 trait ConsumerReloadModelStream {
   def subscription(): UniqueKillSwitch
 }
@@ -51,8 +51,7 @@ private[streams] class ConsumerReloadModelStreamImpl(supervisor: ActorRef, impli
     log.debug(s"Kafka consumer topic: predict-reload-model, message: $msgVal")
     processMessage(msgVal.parseJson.convertTo[PredictReloadModelJsonMsg])
     Future.successful(Done).map(_ => msg)
-  }
-    .mapAsync(1)(msg => msg.committableOffset.commitScaladsl())
+  }.mapAsync(1)(msg => msg.committableOffset.commitScaladsl())
     .viaMat(KillSwitches.single)(Keep.right)
     .toMat(Sink.ignore)(Keep.both)
     .run()

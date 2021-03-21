@@ -2,7 +2,6 @@ package com.la.platform.batch.predict
 
 import java.util
 import java.util.UUID
-
 import com.la.platform.batch.cli.DataJobMain
 import com.la.platform.batch.kafka.KafkaProducerWrapper
 import com.la.platform.batch.ml.LogisticRegressionUtils._
@@ -12,7 +11,7 @@ import org.apache.spark.sql.{Dataset, Encoders, SparkSession}
 import org.apache.spark.streaming.kafka010.ConsumerStrategies._
 import org.apache.spark.streaming.kafka010.KafkaUtils
 import org.apache.spark.streaming.kafka010.LocationStrategies._
-import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 
 /**
   * Created by zemi on 31/10/2016.
@@ -42,28 +41,30 @@ object PredictDataJob extends DataJobMain[PredictDataParams] {
     )
 
     stream.map(record => record.value)
-      .filter(record => !record.isEmpty)
-      .map(value => value)
+      .filter(record => record.nonEmpty)
       .foreachRDD(
         rdd => {
-          val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
           val jsonDataSet : Dataset[String] = spark.createDataset(rdd)(Encoders.STRING)
 
-          spark.read.json(jsonDataSet).foreach(row => {
-            val predResult = predict(row, lrModel.value)
-            val sender = row.getAs[String]("sender")
-            val result =s"""{"data":"$predResult","sender":"$sender"}""".stripMargin
-            kafkaPredictionResultProducer.value.send("prediction-result", sender, result)
-            val data = row.getAs[String]("data")
-            val speedData = s"""{"prediction":"$predResult","data":"$data"}""".stripMargin
-            kafkaPredictionResultProducer.value.send("prediction-data", UUID.randomUUID().toString, speedData)
-          })
+          if (!jsonDataSet.isEmpty) {
+            spark.read.json(jsonDataSet).foreach(row => {
+              val predResult = predict(row, lrModel.value)
+              val sender = row.getAs[String]("sender")
+              val result = s"""{"data":"$predResult","sender":"$sender"}""".stripMargin
+              kafkaPredictionResultProducer.value.send("prediction-result", sender, result)
+              val data = row.getAs[String]("data")
+              val speedData = s"""{"prediction":"$predResult","data":"$data"}""".stripMargin
+              kafkaPredictionResultProducer.value.send("prediction-data", UUID.randomUUID().toString, speedData)
+            })
+          }
         }
       )
 
     streamingContext.start()
     streamingContext.awaitTermination()
   }
+
+
 
   def getKafkaConsumerProp(opt: PredictDataParams): Map[String, Object] = {
     Map[String, Object](

@@ -50,14 +50,12 @@ private class LogisticRegressionProviderImpl(supervisor: ActorRef, system: Actor
   override def predict(data: String): Option[String] =
     lrModelOpt.flatMap(model =>
       sparkOpt.map(spark => {
-        val features = Vectors.dense(data.split("(\\s)+").map(item => item.split(":")(1)).map(_.toDouble))
-        val forPredictionDF = spark.createDataFrame(Seq((0.0, features)))
-          .toDF("label", "features")
-          .select("features")
-        model.transform(forPredictionDF).select("prediction").collect().toList match {
-          case s::xs => s.get(0).toString
-          case Nil => "error"
-        }
+        val features = Vectors.dense(
+          data.split("(\\s)+")
+            .map(item => item.split(":")(1))
+            .map(_.toDouble)
+        )
+        model.predict(features).toString
       })
     )
 

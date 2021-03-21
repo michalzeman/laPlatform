@@ -5,7 +5,9 @@ import com.la.platform.batch.cli.DataJobMain
 import com.la.platform.batch.common.constants._
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, Encoders, SparkSession}
+import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
 import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.kafka010._
@@ -17,6 +19,7 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 object IngestDataJob extends DataJobMain[IngestDataCliParams] {
 
   def run(spark: SparkSession, opt: IngestDataCliParams): Unit = {
+    import spark.implicits._
 
     val workingDirectory = opt.dataDir
 
@@ -34,20 +37,19 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
 
     stream
       .map(record => record.value)
-      .foreachRDD(
-        rdd => {
-          rdd.map(strVal => {
-            val scMap = SparkContext.getOrCreate()
-            scMap.parallelize(Seq(strVal))
-          }).foreach(rddFiltered =>
-            rddFiltered.saveAsTextFile(workingDirectory + s"$INGEST_DATA_PREFIX_PATH${java.util.UUID.randomUUID.toString}-${System.currentTimeMillis}")
-          )
-          val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
-          val json : Dataset[String] = spark.createDataset(rdd)(Encoders.STRING)
-          json.show()
-        })
+      .foreachRDD(rdd => processRecord(spark, rdd, generateFileName(workingDirectory)))
+
     streamingContext.start()
     streamingContext.awaitTermination()
+  }
+
+  def processRecord(spark: SparkSession, record: RDD[String], filePat: () => String): Unit = {
+    val json: Dataset[String] = spark.createDataset(record)(Encoders.STRING)
+    json.show()
+
+    if (!json.isEmpty) {
+      json.write.format("text").save(filePat())
+    }
   }
 
   def consumerParams(opt: IngestDataCliParams): Map[String, Object] = {
@@ -60,6 +62,8 @@ object IngestDataJob extends DataJobMain[IngestDataCliParams] {
       "enable.auto.commit" -> (false: java.lang.Boolean)
     )
   }
+
+  def generateFileName(workingDir: String): () => String = () => s"${workingDir}$INGEST_DATA_PREFIX_PATH${java.util.UUID.randomUUID.toString}-${System.currentTimeMillis}"
 
   override def appName: String = "IngestDataJob"
 

@@ -13,7 +13,7 @@ trait DataJobMain[C <: CliParams] extends SparkUtils {
     val spark = SparkSession
       .builder
       .appName(appName)
-      //      .master("local[*]") -Dspark.master=local[*]
+      .master("local[*]") //-Dspark.master=local[*]
       .getOrCreate()
 
     run(spark, getCliContext(args))

@@ -16,7 +16,7 @@ trait CorsSupport {
 
   protected def optionsCorsHeaders: List[HttpHeader]
 
-  protected def corsRejectionHandler(allowOrigin: `Access-Control-Allow-Origin`) = RejectionHandler
+  protected def corsRejectionHandler(allowOrigin: `Access-Control-Allow-Origin`): RejectionHandler = RejectionHandler
     .newBuilder().handle {
     case MethodRejection(supported) =>
       complete(HttpResponse().withHeaders(
@@ -24,8 +24,7 @@ trait CorsSupport {
           allowOrigin ::
           optionsCorsHeaders
       ))
-  }
-    .result()
+  }.result()
 
   private def originToAllowOrigin(origin: Origin): Option[`Access-Control-Allow-Origin`] =
     if (corsAllowOrigins.contains("*") || corsAllowOrigins.contains(origin.value))
@@ -33,21 +32,22 @@ trait CorsSupport {
     else
       None
 
-  def cors[T]: Directive0 = mapInnerRoute { route => context =>
-    ((context.request.method, context.request.header[Origin].flatMap(originToAllowOrigin)) match {
-      case (OPTIONS, Some(allowOrigin)) =>
-        handleRejections(corsRejectionHandler(allowOrigin)) {
+  def cors[T]: Directive0 = mapInnerRoute { route =>
+    context =>
+      ((context.request.method, context.request.header[Origin].flatMap(originToAllowOrigin)) match {
+        case (OPTIONS, Some(allowOrigin)) =>
+          handleRejections(corsRejectionHandler(allowOrigin)) {
+            respondWithHeaders(allowOrigin, `Access-Control-Allow-Credentials`(corsAllowCredentials)) {
+              route
+            }
+          }
+        case (_, Some(allowOrigin)) =>
           respondWithHeaders(allowOrigin, `Access-Control-Allow-Credentials`(corsAllowCredentials)) {
             route
           }
-        }
-      case (_, Some(allowOrigin)) =>
-        respondWithHeaders(allowOrigin, `Access-Control-Allow-Credentials`(corsAllowCredentials)) {
+        case (_, _) =>
           route
-        }
-      case (_, _) =>
-        route
-    })(context)
+      }) (context)
   }
 }
 

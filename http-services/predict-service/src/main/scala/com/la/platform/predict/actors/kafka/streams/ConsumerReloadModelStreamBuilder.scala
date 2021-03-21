@@ -1,7 +1,6 @@
 package com.la.platform.predict.actors.kafka.streams
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.stream.ActorMaterializer
 
 /**
   * Created by zemi on 31/03/2018.

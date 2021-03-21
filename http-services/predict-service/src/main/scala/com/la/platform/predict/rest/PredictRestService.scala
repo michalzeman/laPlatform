@@ -14,8 +14,8 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**
-  * Created by zemi on 02/11/2016.
-  */
+ * Created by zemi on 02/11/2016.
+ */
 class PredictRestService(implicit system: ActorSystem) extends AbstractRestService {
 
   override implicit val timeout: Timeout = 10000 milliseconds
@@ -32,27 +32,26 @@ class PredictRestService(implicit system: ActorSystem) extends AbstractRestServi
     }
 
   /**
-    * Call prediction functionality
-    *
-    * @param predict
-    * @return
-    */
-  def predict(predict: PredictRequest): Future[PredictResponse] = {
-    getPredictActor.flatMap(predictAct => completeAndCleanUpAct(() => {
-      (predictAct ? PredictActionActor.PredictRequest(predict.data)).mapTo[PredictActionActor.PredictResponse]
+   * Call prediction functionality
+   *
+   * @param predict
+   * @return
+   */
+  def predict(predict: PredictRequest): Future[PredictResponse] = getPredictActor.flatMap(
+    predictAct => completeAndCleanUpAct(() =>
+      (predictAct ? PredictActionActor.PredictRequest(predict.data))
+        .mapTo[PredictActionActor.PredictResponse]
         .map(responseMsg => PredictResponse(responseMsg.result))
-    })(predictAct))
-  }
+    )(predictAct)
+  )
 
   /**
-    * Create PredictActor
-    *
-    * @return actorRef
-    */
-  def getPredictActor: Future[ActorRef] = {
-    Future {
-      val uid = UUID.randomUUID().toString
-      system.actorOf(PredictActionActor.props, s"PredictActor_$uid")
-    }
+   * Create PredictActor
+   *
+   * @return actorRef
+   */
+  def getPredictActor: Future[ActorRef] = Future {
+    val uid = UUID.randomUUID().toString
+    system.actorOf(PredictActionActor.props, s"PredictActor_$uid")
   }
 }

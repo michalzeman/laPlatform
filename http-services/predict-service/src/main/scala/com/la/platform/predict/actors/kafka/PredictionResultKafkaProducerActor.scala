@@ -5,6 +5,7 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.stream.ActorMaterializer
 import com.la.platform.predict.actors.kafka.streams.{PredictionResultKafkaProducerStream, PredictionResultKafkaProducerStreamBuilder}
 import com.la.platform.predict.actors.ml.PredictServiceActor
+import com.la.platform.predict.actors.ml.PredictServiceActor._
 
 /**
   * Created by zemi on 03/11/2016.
@@ -13,6 +14,8 @@ class PredictionResultKafkaProducerActor(predictionResultKafkaProducerStreamBuil
   extends Actor with ActorLogging {
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
+
+  context.system.eventStream.subscribe(self, classOf[PredictionResult])
 
   var predictionResultKafkaProducerStream: Option[PredictionResultKafkaProducerStream] = None
 
@@ -24,7 +27,7 @@ class PredictionResultKafkaProducerActor(predictionResultKafkaProducerStreamBuil
   override def postStop(): Unit = super.postStop()
 
   override def receive: Receive = {
-    case msg: PredictServiceActor.PredictionResult => sendMsgToKafka(msg)
+    case msg: PredictionResult => sendMsgToKafka(msg)
     case _ => log.warning("problem !!!!!!!")
   }
 
@@ -33,7 +36,7 @@ class PredictionResultKafkaProducerActor(predictionResultKafkaProducerStreamBuil
     *
     * @param msg - message to send
     */
-  def sendMsgToKafka(msg: PredictServiceActor.PredictionResult): Unit = {
+  def sendMsgToKafka(msg: PredictionResult): Unit = {
     log.info(s"${getClass.getCanonicalName} produceData() -> message: $msg")
     predictionResultKafkaProducerStream.foreach(_.onNext(msg))
     sender ! PredictRequestMsgSent

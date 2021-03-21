@@ -13,7 +13,10 @@ import scala.util.{Failure, Success}
 /**
   * Created by zemi on 25/10/2016.
   */
-abstract class AbstractRestService(implicit system: ActorSystem) extends RestEndpointRoute with DefaultJsonProtocol with SprayJsonSupport {
+abstract class AbstractRestService(implicit system: ActorSystem)
+  extends RestEndpointRoute
+    with DefaultJsonProtocol
+    with SprayJsonSupport {
 
   protected implicit val timeout: Timeout = 5000 milliseconds
 

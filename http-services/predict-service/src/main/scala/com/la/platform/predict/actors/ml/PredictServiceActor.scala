@@ -31,7 +31,9 @@ class PredictServiceActor(logisticRegressionBuilder: LogisticRegressionProviderB
       logisticRegressionProvider.reloadMlModel()
       sender ! MlModelReloaded
     }
-    case msg: Any => log.warning(s"${getClass.getCanonicalName} received unsupported message: ${msg.getClass}")
+    case msg: Any => {
+      log.warning(s"${getClass.getCanonicalName} received unsupported message: ${msg.getClass}")
+    }
   }
 
   /**
@@ -49,7 +51,6 @@ class PredictServiceActor(logisticRegressionBuilder: LogisticRegressionProviderB
   }
 
   override def preStart(): Unit = {
-//    Source.fromPublisher()
   }
 
   override def postStop(): Unit = {

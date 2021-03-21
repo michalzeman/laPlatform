@@ -12,7 +12,8 @@ import spray.json.RootJsonFormat
   * Created by zemi on 03/11/2016.
   */
 class PredictReloadModelKafkaConsumerActor(consumerReloadModelStreamBuilder: ConsumerReloadModelStreamBuilder)
-  extends Actor with ActorLogging {
+  extends Actor
+    with ActorLogging {
 
   val predictServiceCorrelationId: UUID = UUID.randomUUID()
 
